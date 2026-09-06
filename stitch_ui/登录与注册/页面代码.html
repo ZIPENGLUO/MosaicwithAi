@@ -1,0 +1,330 @@
+<!DOCTYPE html><html lang="zh-CN" style=""><head>
+<meta charset="utf-8">
+<meta content="width=device-width, initial-scale=1.0" name="viewport">
+<title>Mosic - 家庭智能财务管家 | 登录与注册</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          colors: {
+            brand: {
+              DEFAULT: "#D97757",
+              dark: "#B85D3F",
+              deep: "#8F3D23",
+              light: "#F5DFD6",
+              subtle: "#FAF0EB",
+            },
+            carbon: {
+              DEFAULT: "#141413",
+              muted: "#5A5753",
+              subtle: "#8E8A84",
+              border: "#E7E2DC",
+            },
+            sand: {
+              base: "#FCF9F6",
+              surface: "#F6F3F1",
+              container: "#EFECE8",
+              tint: "#E5E0DA",
+            }
+          },
+          fontFamily: {
+            display: ["Cabinet Grotesk", "Epilogue", "-apple-system", "BlinkMacSystemFont", "sans-serif"],
+            body: ["Plus Jakarta Sans", "Manrope", "-apple-system", "BlinkMacSystemFont", "sans-serif"],
+            mono: ["JetBrains Mono", "SF Mono", "monospace"],
+          },
+          boxShadow: {
+            'hearth': '0 20px 60px -15px rgba(217, 119, 87, 0.08), 0 8px 24px -6px rgba(20, 20, 19, 0.04)',
+            'glow-warm': '0 0 50px -10px rgba(217, 119, 87, 0.15)',
+            'card': '0 16px 40px -12px rgba(45, 35, 30, 0.07), 0 2px 8px -2px rgba(20, 20, 19, 0.03)',
+          }
+        },
+      },
+    }
+  </script>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700&amp;family=JetBrains+Mono:wght@400;500;600&amp;family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<style>
+    @layer base {
+      html, body {
+        margin: 0;
+        padding: 0;
+        background-color: #FCF9F6;
+        color: #141413;
+        font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "PingFang SC", "Microsoft YaHei", sans-serif;
+      }
+      ::-webkit-scrollbar {
+        width: 6px;
+        height: 6px;
+      }
+      ::-webkit-scrollbar-thumb {
+        background: #E5E0DA;
+        border-radius: 9999px;
+      }
+    }
+    .text-wordmark {
+      letter-spacing: -0.045em;
+      font-weight: 700;
+      font-feature-settings: "cv02", "cv03", "cv04", "cv11";
+    }
+    .input-warm-focus:focus {
+      border-color: #D97757;
+      box-shadow: 0 0 0 3px rgba(217, 119, 87, 0.14);
+      outline: none;
+    }
+    .noise-bg {
+      background-image: radial-gradient(rgba(217, 119, 87, 0.06) 1px, transparent 1px);
+      background-size: 24px 24px;
+    }
+  </style>
+</head>
+<body class="bg-sand-base min-h-screen text-carbon antialiased selection:bg-brand-light selection:text-brand-deep flex items-center justify-center p-4 md:p-6 lg:p-8">
+<!-- Main 16:9 Standard Canvas Container for Desktop Aesthetic -->
+<main class="w-full max-w-[1440px] aspect-auto xl:aspect-[16/9] min-h-[760px] bg-sand-base rounded-[28px] border border-carbon-border/60 shadow-hearth overflow-hidden relative flex flex-col justify-between">
+<!-- Background Ambient Warm Diffuse Lights -->
+<div class="absolute -top-40 -left-20 w-[540px] h-[540px] rounded-full bg-brand/8 blur-[120px] pointer-events-none"></div>
+<div class="absolute bottom-0 right-1/3 w-[600px] h-[600px] rounded-full bg-brand-light/30 blur-[140px] pointer-events-none"></div>
+<div class="absolute -bottom-20 right-0 w-[420px] h-[420px] rounded-full bg-sand-tint/50 blur-[100px] pointer-events-none"></div>
+<!-- Top Universal Slim Header -->
+<header class="relative z-20 px-8 lg:px-14 py-6 flex items-center justify-between border-b border-carbon-border/40">
+<!-- Wordmark Pure Typography (No Graphic Logo) -->
+<div class="flex items-baseline gap-3">
+<span class="text-wordmark text-2xl lg:text-[26px] text-carbon tracking-tighter">Mosic</span>
+<div class="h-3.5 w-px bg-carbon-border"></div>
+<span class="text-xs tracking-wider uppercase font-semibold text-brand">家庭智能财务管家</span>
+<span class="hidden sm:inline-block text-[11px] px-2 py-0.5 rounded-full bg-sand-surface border border-carbon-border/70 text-carbon-muted font-mono font-medium">AI FIN 2.4</span>
+</div>
+<!-- Right Support / Language / Security Anchor -->
+<div class="flex items-center gap-6 text-xs text-carbon-muted">
+<div class="hidden md:flex items-center gap-1.5 font-medium">
+<span class="material-symbols-outlined text-[15px] text-brand">verified_user</span>
+<span class="">银行级本地零知识数据隔离</span>
+</div>
+<div class="flex items-center gap-2">
+<span class="w-2 h-2 rounded-full bg-emerald-600/70"></span>
+<span class="font-mono text-[11px] text-carbon-muted">系统正常运行</span>
+</div>
+</div>
+</header>
+<!-- Center Workspace: 16:9 Balanced Split View -->
+<div class="relative z-10 grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 px-8 lg:px-14 py-8 lg:py-10 flex-1 items-center">
+<!-- Left Column: Editorial Value Presentation & Brand Resonance (7 Cols) -->
+<div class="lg:col-span-7 flex flex-col space-y-8 pr-0 lg:pr-6 justify-center">
+<!-- Hero Copy -->
+<div class="space-y-4 max-w-2xl">
+
+<h1 class="text-4xl lg:text-[48px] font-bold text-carbon leading-[1.35] tracking-normal mb-6">
+            让每一笔家庭收支，<br>
+            <span class="text-brand block mt-1">都有温度与规划。</span>
+</h1>
+<p class="text-base lg:text-[17px] text-carbon-muted leading-[1.8] font-normal max-w-lg">
+            在细水长流的日常里，记录柴米油盐的踏实，也照见未来的心愿与自由。Mosic 以温润科技与自主认知算法，陪伴每一个家庭从容前行。
+          </p>
+</div>
+<!-- 3 Key Pillars: Monochromatic / Warm Sand & Terracotta Minimal Cards -->
+
+<!-- Trust Metric + Encryption Pill (Cohesive Warm Hearth Palette) -->
+
+</div>
+<!-- Right Column: Refined Floating Auth Suite Card (5 Cols) -->
+<div class="lg:col-span-5 flex justify-center lg:justify-end">
+<div class="w-full max-w-[440px] bg-white rounded-3xl border border-carbon-border/70 shadow-sm p-8 relative">
+<!-- Card Header & Wordmark Sub-Title -->
+<div class="text-left mb-6">
+<div class="flex items-center justify-between mb-1.5">
+<h2 class="text-wordmark text-2xl text-carbon tracking-tight">Mosic</h2>
+<span class="text-[11px] font-mono uppercase px-2 py-0.5 rounded bg-brand/10 text-brand font-semibold">Security Portal</span>
+</div>
+<p class="text-xs text-carbon-muted">开启属于你与家人的清晰账务与资产协同</p>
+</div>
+<!-- Two Tabs: 密码登录 / 验证码登录 -->
+<div class="p-1 bg-sand-surface rounded-xl flex mb-6 border border-carbon-border/50 text-xs">
+<button class="flex-1 py-2 text-center rounded-lg font-semibold text-carbon bg-white shadow-sm transition-all duration-200" id="tab-pwd" onclick="switchTab('pwd')" type="button">
+              密码登录
+            </button>
+<button class="flex-1 py-2 text-center rounded-lg font-medium text-carbon-muted hover:text-carbon transition-all duration-200" id="tab-sms" onclick="switchTab('sms')" type="button">
+              验证码登录
+            </button>
+</div>
+<!-- Form 1: Password Login -->
+<form class="space-y-4" id="form-pwd" onsubmit="event.preventDefault();">
+<div>
+<label class="block text-xs font-semibold text-carbon mb-1.5" for="pwd-account">账号 / 手机号 / 邮箱</label>
+<div class="relative flex items-center">
+<span class="material-symbols-outlined absolute left-3.5 text-carbon-subtle text-[18px] pointer-events-none">account_circle</span>
+<input class="input-warm-focus w-full h-11 pl-10 pr-3.5 bg-sand-base text-carbon placeholder:text-carbon-subtle text-xs rounded-xl border border-carbon-border/80 transition-all duration-150" id="pwd-account" placeholder="输入手机号或注册邮箱" type="text">
+</div>
+</div>
+<div>
+<div class="flex items-center justify-between mb-1.5">
+<label class="block text-xs font-semibold text-carbon" for="pwd-pass">登录密码</label>
+<a class="text-xs text-brand hover:text-brand-dark transition-colors font-medium" href="#forgot">忘记密码？</a>
+</div>
+<div class="relative flex items-center">
+<span class="material-symbols-outlined absolute left-3.5 text-carbon-subtle text-[18px] pointer-events-none">lock</span>
+<input class="input-warm-focus w-full h-11 pl-10 pr-10 bg-sand-base text-carbon placeholder:text-carbon-subtle text-xs rounded-xl border border-carbon-border/80 transition-all duration-150" id="pwd-pass" placeholder="输入登录密码" type="password">
+<button class="absolute right-3 text-carbon-subtle hover:text-carbon p-1 transition-colors" onclick="togglePasswordVisibility('pwd-pass', 'icon-pwd-pass')" type="button">
+<span class="material-symbols-outlined text-[18px] align-middle" id="icon-pwd-pass">visibility_off</span>
+</button>
+</div>
+</div>
+<div class="flex items-center justify-between pt-0.5">
+<label class="flex items-center gap-2 cursor-pointer select-none">
+<input checked="" class="w-3.5 h-3.5 rounded text-brand focus:ring-brand/30 border-carbon-border accent-brand" type="checkbox">
+<span class="text-xs text-carbon-muted">30 天内保持免登录</span>
+</label>
+</div>
+<button class="w-full h-11 mt-2 bg-gradient-to-r from-brand to-brand-dark hover:to-brand-deep text-white rounded-xl text-xs font-semibold tracking-wide shadow-sm hover:shadow active:scale-[0.99] transition-all duration-150 flex items-center justify-center gap-1.5" type="submit">
+<span class="">立即登录</span>
+<span class="material-symbols-outlined text-base">arrow_forward</span>
+</button>
+</form>
+<!-- Form 2: SMS Verification Login -->
+<form class="space-y-4 hidden" id="form-sms" onsubmit="event.preventDefault();">
+<div>
+<label class="block text-xs font-semibold text-carbon mb-1.5" for="sms-phone">中国大陆手机号</label>
+<div class="relative flex items-center">
+<span class="absolute left-3.5 font-mono text-xs font-semibold text-carbon-muted pr-2 border-r border-carbon-border">+86</span>
+<input class="input-warm-focus w-full h-11 pl-16 pr-3.5 bg-sand-base text-carbon placeholder:text-carbon-subtle text-xs rounded-xl border border-carbon-border/80 transition-all duration-150" id="sms-phone" placeholder="请输入绑定的手机号" type="tel">
+</div>
+</div>
+<div>
+<label class="block text-xs font-semibold text-carbon mb-1.5" for="sms-code">短信验证码</label>
+<div class="flex gap-2">
+<div class="relative flex-1">
+<span class="material-symbols-outlined absolute left-3.5 top-3 text-carbon-subtle text-[18px] pointer-events-none">dialpad</span>
+<input class="input-warm-focus w-full h-11 pl-10 pr-3 bg-sand-base text-carbon placeholder:text-carbon-subtle text-xs rounded-xl border border-carbon-border/80 font-mono tracking-widest transition-all duration-150" id="sms-code" maxlength="6" placeholder="6位数字验证码" type="text">
+</div>
+<button class="h-11 px-4 bg-sand-surface hover:bg-sand-container text-carbon rounded-xl text-xs font-medium border border-carbon-border/70 transition-colors whitespace-nowrap" id="btn-sms-code" onclick="startCountdown('btn-sms-code', 'sms-phone')" type="button">
+                  获取验证码
+                </button>
+</div>
+</div>
+<div class="pt-0.5">
+<span class="text-xs text-carbon-muted">提示：未注册的手机号验证成功后将自动初始化专属主账本</span>
+</div>
+<button class="w-full h-11 mt-2 bg-gradient-to-r from-brand to-brand-dark hover:to-brand-deep text-white rounded-xl text-xs font-semibold tracking-wide shadow-sm hover:shadow active:scale-[0.99] transition-all duration-150 flex items-center justify-center gap-1.5" type="submit">
+<span class="">快捷验证并登录</span>
+<span class="material-symbols-outlined text-base">arrow_forward</span>
+</button>
+</form>
+<!-- Bottom Registration Link -->
+<div class="mt-4 text-center text-xs text-carbon-muted">
+<span class="">还没有 Mosic 家庭账号？</span>
+<a class="font-semibold text-brand hover:text-brand-dark transition-colors ml-1 underline decoration-carbon-border" href="#register">立即注册新账本</a>
+</div>
+<!-- Divider with white background -->
+<div class="relative my-5">
+<div class="absolute inset-0 flex items-center">
+<div class="w-full border-t border-carbon-border/70"></div>
+</div>
+<div class="relative flex justify-center text-[11px] uppercase tracking-wider">
+<span class="bg-white px-3 text-carbon-subtle">极简快捷登录</span>
+</div>
+</div>
+<!-- Third Party Actions -->
+<div class="grid grid-cols-2 gap-2.5">
+<button class="h-10 rounded-xl bg-sand-base hover:bg-sand-surface border border-carbon-border/70 hover:border-carbon-border text-xs font-medium text-carbon flex items-center justify-center gap-2 transition-colors" type="button">
+<svg class="w-4 h-4 text-emerald-700" fill="currentColor" viewBox="0 0 24 24">
+<path d="M8.5 4C4.36 4 1 6.91 1 10.5c0 2.05 1.07 3.88 2.76 5.1-.12.63-.56 2.07-.63 2.37-.11.45.2.4.4.26.17-.11 2.3-1.57 2.72-1.85.73.2 1.48.31 2.25.31 4.14 0 7.5-2.91 7.5-6.5S12.64 4 8.5 4zm-1.88 5.62a1.12 1.12 0 110-2.24 1.12 1.12 0 010 2.24zm4.25 0a1.12 1.12 0 110-2.24 1.12 1.12 0 010 2.24zM16.5 11c-3.17 0-5.75 2.13-5.75 4.75 0 .5.09.98.27 1.43-.37.38-1.74 1.42-1.88 1.52-.16.11.08.15.17.09.24-.16 1.48-.99 1.58-1.06 1.05.57 2.29.89 3.61.89 3.18 0 5.75-2.13 5.75-4.75S19.68 11 16.5 11zm-1.5 3.5a.88.88 0 110-1.75.88.88 0 010 1.75zm3 0a.88.88 0 110-1.75.88.88 0 010 1.75z"></path>
+</svg>
+<span class="">微信扫码登录</span>
+</button>
+<button class="h-10 rounded-xl bg-sand-base hover:bg-sand-surface border border-carbon-border/70 hover:border-carbon-border text-xs font-medium text-carbon flex items-center justify-center gap-2 transition-colors" type="button">
+<svg class="w-3.5 h-3.5 text-carbon" fill="currentColor" viewBox="0 0 24 24">
+<path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.81-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M15.97 6.85c.66-.8 1.11-1.92.99-3.04-.96.04-2.13.64-2.81 1.44-.61.7-.14 1.84.02 2.97 1.07.08 2.14-.57 2.8-1.37z"></path>
+</svg>
+<span class="">Apple ID 登录</span>
+</button>
+</div>
+<!-- Bottom Agreement Disclaimer -->
+<div class="mt-5 text-center">
+<p class="text-[11px] text-carbon-subtle leading-relaxed">
+              继续操作即代表您已阅读并同意 
+              <a class="text-carbon hover:text-brand underline decoration-carbon-border" href="#terms">用户服务协议</a>
+              与
+              <a class="text-carbon hover:text-brand underline decoration-carbon-border" href="#privacy">家庭财务隐私保护政策</a>
+</p>
+</div>
+</div>
+</div>
+</div>
+<!-- 16:9 Balanced Micro Bottom Bar -->
+<footer class="relative z-20 px-8 lg:px-14 py-4 border-t border-carbon-border/40 flex flex-col sm:flex-row items-center justify-between text-[11px] text-carbon-subtle gap-2">
+<div class="flex items-center gap-4">
+<span class="">© 2024 Mosic Financial Labs. 保留所有权利</span>
+<span class="hidden sm:inline-block text-carbon-border">|</span>
+<span class="hidden sm:inline-block">IPC 备 202409817 号</span>
+</div>
+<div class="flex items-center gap-5">
+<a class="hover:text-carbon transition-colors" href="#data-sovereignty">数据自主可控倡议</a>
+<a class="hover:text-carbon transition-colors" href="#security-standard">SOC2 Type II 审计标准</a>
+<a class="hover:text-carbon transition-colors" href="#contact">联系支持</a>
+</div>
+</footer>
+</main>
+<!-- Interactive Scripts -->
+<script>
+    function switchTab(target) {
+      const tabs = {
+        pwd: { btn: document.getElementById('tab-pwd'), form: document.getElementById('form-pwd') },
+        sms: { btn: document.getElementById('tab-sms'), form: document.getElementById('form-sms') },
+        reg: { btn: document.getElementById('tab-reg'), form: document.getElementById('form-reg') },
+      };
+
+      Object.keys(tabs).forEach(key => {
+        const item = tabs[key];
+        if (key === target) {
+          item.btn.className = "flex-1 py-2 text-center rounded-lg font-semibold text-carbon bg-white shadow-sm transition-all duration-200";
+          item.form.classList.remove('hidden');
+        } else {
+          item.btn.className = "flex-1 py-2 text-center rounded-lg font-medium text-carbon-muted hover:text-carbon transition-all duration-200";
+          item.form.classList.add('hidden');
+        }
+      });
+    }
+
+    function togglePasswordVisibility(inputId, iconId) {
+      const input = document.getElementById(inputId);
+      const icon = document.getElementById(iconId);
+      if (input.type === 'password') {
+        input.type = 'text';
+        icon.textContent = 'visibility';
+      } else {
+        input.type = 'password';
+        icon.textContent = 'visibility_off';
+      }
+    }
+
+    const countdownTimers = {};
+    function startCountdown(buttonId, phoneInputId) {
+      const btn = document.getElementById(buttonId);
+      const phoneInput = document.getElementById(phoneInputId);
+      
+      if (!phoneInput || !phoneInput.value.trim()) {
+        phoneInput.focus();
+        return;
+      }
+
+      let seconds = 60;
+      btn.disabled = true;
+      btn.classList.add('opacity-50', 'cursor-not-allowed');
+      btn.textContent = `${seconds}s 后重发`;
+
+      clearInterval(countdownTimers[buttonId]);
+      countdownTimers[buttonId] = setInterval(() => {
+        seconds--;
+        if (seconds > 0) {
+          btn.textContent = `${seconds}s 后重发`;
+        } else {
+          clearInterval(countdownTimers[buttonId]);
+          btn.disabled = false;
+          btn.classList.remove('opacity-50', 'cursor-not-allowed');
+          btn.textContent = '获取验证码';
+        }
+      }, 1000);
+    }
+  </script>
+
+
+</body></html>
