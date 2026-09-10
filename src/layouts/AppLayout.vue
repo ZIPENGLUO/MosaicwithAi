@@ -1,13 +1,13 @@
 <template>
   <div class="flex h-screen w-screen overflow-hidden text-on-surface font-body-md" style="background-color: #FCF9F6;">
-    <!-- 侧边导航栏：严格参考家庭财务首页纯文字排版与温暖极简质感 -->
+    <!-- 侧边导航栏：纯文字排版与温暖极简质感 -->
     <aside class="w-64 h-full bg-surface-container-lowest flex flex-col justify-between shrink-0 shadow-[0_1px_8px_rgba(0,0,0,0.04)] border-r border-outline-variant/30 z-20 select-none">
       <div class="flex flex-col">
         <!-- 侧栏顶部标题：纯文字排版（无Logo图标） -->
         <div class="h-16 px-4 flex items-center">
           <div class="flex flex-col justify-center">
             <span class="font-headline-md text-xl text-on-surface tracking-tight font-bold leading-none">Mosic</span>
-            <span class="font-label-sm text-[10px] text-on-surface-variant leading-none mt-1 tracking-wider uppercase">家庭智能财务管家</span>
+            <span class="font-label-sm text-[10px] text-on-surface-variant leading-none mt-1 tracking-wider uppercase">智能财务管家</span>
           </div>
         </div>
 
@@ -106,7 +106,7 @@
 
     <!-- 右侧主工作区：紧凑顶栏 + 页面内容 -->
     <div class="flex-1 h-full flex flex-col overflow-hidden min-w-0" style="background-color: #FCF9F6;">
-      <!-- 紧凑顶栏（完全参考家庭财务首页规范） -->
+      <!-- 紧凑顶栏规范 -->
       <header class="h-16 px-6 border-b border-surface-container-high/60 flex items-center justify-between shrink-0 z-30" style="background-color: #FCF9F6;">
         <!-- 页面标题与动态问候语 -->
         <div class="flex items-center gap-3">
@@ -173,9 +173,9 @@
             <span class="w-8 h-8 rounded-full bg-primary/10 text-primary flex items-center justify-center">
               <span class="material-symbols-outlined text-base">add_card</span>
             </span>
-            <span>新增家庭收支账目</span>
+            <span>新增收支账目</span>
           </div>
-          <span class="text-xs text-on-surface-variant font-normal">林氏一家 账本</span>
+          <span class="text-xs text-on-surface-variant font-normal">{{ currentLedger }}</span>
         </v-card-title>
         <v-card-text class="px-0 pt-3">
           <v-text-field
@@ -190,7 +190,7 @@
           <v-select
             v-model="quickBill.category"
             label="归属品类"
-            :items="['餐饮美食', '居家生活', '孩子教育', '休闲出行', '医疗保健', '工资收益', '理财分红']"
+            :items="['餐饮美食', '居家生活', '教育学习', '休闲出行', '医疗保健', '工资收益', '理财分红']"
             variant="outlined"
             density="comfortable"
             class="mb-3"
@@ -198,7 +198,7 @@
           <v-text-field
             v-model="quickBill.remark"
             label="商户或用途备注"
-            placeholder="例如：盒马生鲜、周末采买、早餐等"
+            placeholder="例如：生鲜超市、交通通勤、早餐等"
             variant="outlined"
             density="comfortable"
             class="mb-3"
@@ -206,7 +206,7 @@
           <v-select
             v-model="quickBill.member"
             label="账目承担方"
-            :items="['家庭公用账本', '林知栖 (本人)', '陈先生']"
+            :items="['账本主账户', '林知栖 (本人)', '陈先生']"
             variant="outlined"
             density="comfortable"
           />
@@ -236,6 +236,8 @@
 import { computed, ref } from 'vue'
 import { useRoute } from 'vue-router'
 
+import { useLedgerStore } from '../stores/ledger'
+
 interface NavItem {
   title: string
   to: string
@@ -243,31 +245,31 @@ interface NavItem {
 }
 
 const route = useRoute()
+const ledgerStore = useLedgerStore()
 const dialog = ref(false)
 const ledgerDropdownOpen = ref(false)
-const currentLedger = ref('林氏一家 账本')
+const currentLedger = computed({
+  get: () => ledgerStore.currentLedger,
+  set: (val) => ledgerStore.setLedger(val)
+})
 
-const ledgers = [
-  { name: '林氏一家 账本' },
-  { name: '个人私密账本' },
-  { name: '海岛游专项基金' }
-]
+const ledgers = ledgerStore.ledgers
 
 const quickBill = ref({
   amount: '',
   category: '餐饮美食',
   remark: '',
-  member: '家庭公用账本'
+  member: '账本主账户'
 })
 
-const navItems: NavItem[] = [
+const navItems = computed<NavItem[]>(() => [
   { title: '首页概览', to: '/home', icon: 'dashboard' },
   { title: '智能票据识别', to: '/ocr', icon: 'document_scanner' },
   { title: '财务日历', to: '/calendar', icon: 'calendar_month' },
   { title: '账目明细', to: '/bills', icon: 'receipt_long' },
   { title: '统计分析', to: '/analytics', icon: 'pie_chart' },
-  { title: '家庭协同', to: '/family', icon: 'group' }
-]
+  { title: ledgerStore.hasMultipleMembers ? '家庭协同' : '协同共享', to: '/family', icon: 'diversity_3' }
+])
 
 const isActive = (path: string) => {
   return route.path === path
@@ -275,20 +277,24 @@ const isActive = (path: string) => {
 
 const currentTitle = computed(() => {
   if (route.path === '/home') return '早安，知栖！'
-  const match = navItems.find(item => item.to === route.path)
+  const match = navItems.value.find(item => item.to === route.path)
   if (match) return match.title
   if (route.path === '/settings') return '个人中心设置'
   return '财务管理'
 })
 
 const currentSubtitle = computed(() => {
-  if (route.path === '/home') return '今天也一起把家庭财务安排得井井有条'
+  if (route.path === '/home') return '今天也把财务安排得井井有条'
   if (route.path === '/ocr') return 'Vision-LLM 4.0 智能凭证光学解析与自动入账'
   if (route.path === '/calendar') return '按日期审阅现金流波峰与支出明细'
-  if (route.path === '/bills') return '多维收支明细与家庭分类账目流水'
-  if (route.path === '/analytics') return '家庭财富资产负债与消费结构全景分析'
-  if (route.path === '/family') return '家庭成员分摊协作与共享账本权限管理'
-  if (route.path === '/settings') return '家庭账本偏好与账户安全隐私设置'
+  if (route.path === '/bills') return '多维收支明细与分类账目流水'
+  if (route.path === '/analytics') return '财富资产负债与消费结构全景分析'
+  if (route.path === '/family') {
+    return ledgerStore.hasMultipleMembers
+      ? '家庭成员分摊协作、共同资金池与账本权限管理'
+      : '账本协同共享、授权访问与权限管理'
+  }
+  if (route.path === '/settings') return '账本偏好与账户安全隐私设置'
   return ''
 })
 
@@ -304,6 +310,6 @@ const saveQuickBill = () => {
 }
 
 const handleExport = () => {
-  alert('家庭财务流水报表导出就绪，正在生成 Excel / PDF 格式...')
+  alert('财务流水报表导出就绪，正在生成 Excel / PDF 格式...')
 }
 </script>

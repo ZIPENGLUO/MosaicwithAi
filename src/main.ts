@@ -3,13 +3,18 @@ import { createPinia } from 'pinia'
 import { createVuetify } from 'vuetify'
 import * as components from 'vuetify/components'
 import * as directives from 'vuetify/directives'
+import { VFileUpload } from 'vuetify/labs/VFileUpload'
+import 'vuetify/lib/labs/VFileUpload/VFileUpload.css'
 import 'vuetify/styles'
 import App from './App.vue'
 import router from './router'
 import './styles.css'
 
 const vuetify = createVuetify({
-  components,
+  components: {
+    ...components,
+    VFileUpload
+  },
   directives,
   icons: {
     defaultSet: 'svg'

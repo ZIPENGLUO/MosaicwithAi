@@ -73,20 +73,20 @@
     <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 flex-1 min-h-0">
       <!-- 左侧主展示区 (8列) -->
       <div class="lg:col-span-8 flex flex-col gap-6 justify-between">
-        <!-- 上半部：宽幅近30天收支动态趋势 (ECharts 交互曲线，支持近30天/14天/7天维度切换) -->
+        <!-- 上半部：宽幅近30天收支动态趋势 (定死高度 400px，图表高度减少 50px 至 310px) -->
         <div
-          class="bg-surface-container-lowest rounded-2xl p-6 shadow-sm border border-outline-variant/30 flex flex-col justify-between"
+          class="bg-surface-container-lowest rounded-2xl p-6 shadow-sm border border-outline-variant/30 flex flex-col justify-between h-[400px] shrink-0"
         >
-          <div class="flex items-center justify-between mb-3 shrink-0">
+          <div class="flex items-center justify-between mb-2 shrink-0">
             <div>
               <div class="flex items-center gap-2.5">
-                <h3 class="font-headline-sm text-base lg:text-lg font-bold text-on-surface">家庭收支动态走势</h3>
+                <h3 class="font-headline-sm text-base lg:text-lg font-bold text-on-surface">收支动态走势</h3>
                 <span class="text-xs px-2 py-0.5 rounded bg-surface-container text-on-surface-variant font-mono"
                   >Vision Analytics</span
                 >
               </div>
               <span class="font-label-sm text-xs text-on-surface-variant mt-0.5 block"
-                >每日现金流波峰预测 · ECharts 曲线动态推演</span
+                >每日收支情况</span
               >
             </div>
 
@@ -145,11 +145,11 @@
             </div>
           </div>
 
-          <!-- ECharts 折线面积图容器 (高度扩充至 360px，充满视野) -->
-          <div ref="trendChartRef" style="width: 100%; height: 360px; min-height: 360px"></div>
+          <!-- ECharts 折线面积图容器 (高度由 360px 减 50px 至 310px，定死高度) -->
+          <div ref="trendChartRef" style="width: 100%; height: 310px; min-height: 310px"></div>
         </div>
 
-        <!-- 下半部：同级并列的“家庭预算执行监控”与“分类支出构成 (ECharts 环形图)” -->
+        <!-- 下半部：同级并列的“预算执行监控”与“分类支出构成 (ECharts 环形图)” -->
         <div class="grid grid-cols-1 md:grid-cols-2 gap-6 flex-1">
           <!-- 预算监控卡片 -->
           <div
@@ -158,7 +158,7 @@
             <div class="flex items-center justify-between shrink-0 mb-2">
               <div class="flex items-center gap-2">
                 <span class="material-symbols-outlined text-primary text-lg">track_changes</span>
-                <h3 class="font-headline-sm text-base font-bold text-on-surface">家庭预算执行监控</h3>
+                <h3 class="font-headline-sm text-base font-bold text-on-surface">预算执行监控</h3>
               </div>
               <span class="font-label-md text-xs text-on-surface-variant font-medium">4月 (余 9 天)</span>
             </div>
@@ -259,11 +259,11 @@
 
       <!-- 右侧辅助区 (4列)：近期流水记录 + 知栖 AI 智能管家洞察 (撑满整个右侧高度) -->
       <div class="lg:col-span-4 flex flex-col gap-6 justify-between h-full">
-        <!-- 近期收支流水卡片 (6 笔真实家庭收支，更大文字与间距) -->
+        <!-- 近期收支流水卡片 (定死高度 400px 与左侧折线图卡片保持一致) -->
         <div
-          class="bg-surface-container-lowest rounded-2xl p-6 shadow-sm border border-outline-variant/30 flex flex-col justify-between"
+          class="bg-surface-container-lowest rounded-2xl p-6 shadow-sm border border-outline-variant/30 flex flex-col justify-between h-[400px] shrink-0"
         >
-          <div class="flex items-center justify-between mb-3">
+          <div class="flex items-center justify-between mb-2 shrink-0">
             <div class="flex items-center gap-2">
               <span class="material-symbols-outlined text-on-surface text-lg">receipt_long</span>
               <h3 class="font-headline-sm text-base font-bold text-on-surface">近期收支流水</h3>
@@ -277,15 +277,15 @@
             </router-link>
           </div>
 
-          <div class="flex flex-col gap-2.5">
+          <div class="flex flex-col gap-1.5 flex-1 justify-between my-1">
             <div
               v-for="tx in recentTransactions"
               :key="tx.title"
-              class="flex items-center justify-between p-2.5 rounded-xl hover:bg-surface-container-low transition-colors cursor-pointer"
+              class="flex items-center justify-between p-1.5 px-2 rounded-xl hover:bg-surface-container-low transition-colors cursor-pointer"
             >
-              <div class="flex items-center gap-3 min-w-0">
+              <div class="flex items-center gap-2.5 min-w-0">
                 <div
-                  class="w-9 h-9 rounded-full bg-surface-container flex items-center justify-center shrink-0"
+                  class="w-8 h-8 rounded-full bg-surface-container flex items-center justify-center shrink-0"
                   :class="tx.iconColor"
                 >
                   <span class="material-symbols-outlined text-base">{{ tx.icon }}</span>
@@ -301,7 +301,7 @@
             </div>
           </div>
 
-          <div class="flex items-center justify-between pt-3 mt-1 border-t border-surface-container-low text-xs text-on-surface-variant">
+          <div class="flex items-center justify-between pt-2.5 mt-auto border-t border-surface-container-low text-xs text-on-surface-variant shrink-0">
             <span>今日已发生 2 笔开销 · 累计 ¥706.40</span>
             <span class="text-secondary font-semibold">记账规范率 100%</span>
           </div>
@@ -326,21 +326,21 @@
           <div
             class="p-4 rounded-xl bg-surface-container-lowest/95 backdrop-blur-sm shadow-sm flex flex-col gap-3 text-xs leading-relaxed border border-outline-variant/20 my-auto"
           >
-            <p class="text-on-surface">💡 <strong>餐饮预警：</strong> 聚会与大宗食材支出达上限 78%，周末建议尝试温馨家庭烘焙，健康又省心。</p>
+            <p class="text-on-surface">💡 <strong>餐饮预警：</strong> 聚会与大宗食材支出达上限 78%，周末建议尝试手工轻食烘焙，健康又省心。</p>
             <p class="text-on-surface pt-2 border-t border-surface-container-high/60">
               🌿 <strong>目标结余：</strong> 储蓄状态充盈，完全可达成
               <strong class="text-primary font-bold">¥15,000</strong> 海岛游定投专项！
             </p>
             <p class="text-on-surface pt-2 border-t border-surface-container-high/60">
-              📈 <strong>现金流预测：</strong> 预计本月净结余将超预期 12%，家庭 6 个月抗风险储备金极充沛。
+              📈 <strong>现金流预测：</strong> 预计本月净结余将超预期 12%，当前 6 个月抗风险储备金极充沛。
             </p>
             <p class="text-on-surface pt-2 border-t border-surface-container-high/60">
-              🔒 <strong>家庭隐私屏障：</strong> 端侧账本多层脱敏隔离，仅林知栖与苏晓具备家庭主理权限。
+              🔒 <strong>账本隐私屏障：</strong> 端侧账本多层脱敏隔离，具备主理与记账授权。
             </p>
           </div>
 
           <div class="flex items-center justify-between pt-3 mt-1 border-t border-surface-container-low text-xs">
-            <span class="text-on-surface-variant font-medium">家庭财务平和度 88% · 恬适健康</span>
+            <span class="text-on-surface-variant font-medium">财务平和度 88% · 恬适健康</span>
             <span class="text-primary font-bold">AI 实时守护中</span>
           </div>
         </div>
@@ -402,7 +402,7 @@ const recentTransactions = [
     iconColor: "text-primary",
   },
   {
-    title: "星巴克甄选 · 家庭下午茶",
+    title: "星巴克甄选 · 咖啡轻食下午茶",
     subtitle: "昨天 15:45 · 苏晓",
     amount: "- ¥ 68.00",
     icon: "local_cafe",
@@ -423,14 +423,14 @@ const recentTransactions = [
     iconColor: "text-primary",
   },
   {
-    title: "滴滴出行 · 孩子课外接送",
+    title: "滴滴出行 · 日常通勤接送",
     subtitle: "4月16日 08:15 · 苏晓",
     amount: "- ¥ 32.80",
     icon: "directions_car",
     iconColor: "text-outline",
   },
   {
-    title: "Apple 订阅 · iCloud+ 家庭共享",
+    title: "Apple 订阅 · iCloud+ 云存储",
     subtitle: "4月15日 00:00 · 周期自动扣款",
     amount: "- ¥ 68.00",
     icon: "cloud",
