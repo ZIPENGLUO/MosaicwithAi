@@ -1,0 +1,45 @@
+# 依赖
+node_modules/
+
+# 构建产物
+dist/
+dist-ssr/
+*.local
+
+# 编辑器 / IDE
+.vscode/*
+!.vscode/extensions.json
+.idea/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+
+# 系统文件
+.DS_Store
+Thumbs.db
+
+# 日志
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# 测试用的浏览器临时配置（体积大，不应入库）
+.edge_test_profile/
+
+# 编辑器 / AI 工具写文件时产生的临时文件（Vite 监听它会 EBUSY 崩溃）
+*.tmp
+*.tmpdir/
+.*.tmpdir/
+
+# 环境变量（本地配置不入库；如需示例请另建 .env.example）
+.env
+.env.local
+.env.*.local
+
+# TypeScript 增量构建信息
+*.tsbuildinfo
