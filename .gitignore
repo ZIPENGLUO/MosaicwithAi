@@ -1,6 +1,13 @@
 # 依赖
 node_modules/
 
+# 锁文件：本项目已从 pnpm 转为 npm，保留 package-lock.json，
+# 旧的 pnpm 锁文件与备份不再跟踪（文件仍留在磁盘上以备回退）
+pnpm-lock.yaml
+pnpm-lock.yaml.pnpm-bak
+pnpm-lock.yaml.*
+yarn.lock
+
 # 构建产物
 dist/
 dist-ssr/
