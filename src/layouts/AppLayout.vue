@@ -76,31 +76,40 @@
           </div>
         </div>
 
-        <!-- 个人资料卡入口（接入真实人物头像） -->
-        <router-link
-          to="/settings"
-          class="flex items-center justify-between p-2 rounded-xl bg-surface-container-low hover:bg-surface-container border border-outline-variant/20 transition-colors cursor-pointer text-inherit no-underline group"
+        <!-- 个人资料卡（真实登录用户 + 退出登录） -->
+        <div
+          class="flex items-center justify-between p-2 rounded-xl bg-surface-container-low hover:bg-surface-container border border-outline-variant/20 transition-colors group"
         >
-          <div class="flex items-center gap-2 min-w-0">
+          <router-link
+            to="/settings"
+            class="flex items-center gap-2 min-w-0 cursor-pointer text-inherit no-underline"
+          >
             <div class="relative shrink-0">
               <img
                 src="/avatars/user-lin.png"
-                alt="林知栖"
+                :alt="displayName"
                 class="w-8 h-8 rounded-full object-cover border border-outline-variant/30 shadow-sm"
               />
               <span class="absolute -bottom-0.5 -right-0.5 w-2 h-2 rounded-full bg-secondary border border-white"></span>
             </div>
             <div class="flex flex-col min-w-0">
               <div class="flex items-center gap-1">
-                <span class="font-label-md text-xs text-on-surface font-semibold truncate leading-tight">林知栖</span>
+                <span class="font-label-md text-xs text-on-surface font-semibold truncate leading-tight">{{ displayName }}</span>
                 <span class="px-1 py-0.2 rounded bg-primary/10 text-primary text-[9px] font-mono leading-tight">户主</span>
               </div>
-              <span class="font-label-sm text-[10px] text-on-surface-variant truncate leading-none mt-0.5">账本主理人 · 共享中</span>
+              <span class="font-label-sm text-[10px] text-on-surface-variant truncate leading-none mt-0.5">{{ userEmail }}</span>
               <span class="font-label-sm text-[9px] text-secondary leading-none mt-0.5">隐私隔离保护中</span>
             </div>
-          </div>
-          <span class="material-symbols-outlined text-on-surface-variant text-xs group-hover:text-primary transition-colors">chevron_right</span>
-        </router-link>
+          </router-link>
+          <button
+            class="material-symbols-outlined text-on-surface-variant text-xs hover:text-primary transition-colors cursor-pointer bg-transparent border-0 p-1"
+            type="button"
+            title="退出登录"
+            @click="handleLogout"
+          >
+            logout
+          </button>
+        </div>
       </div>
     </aside>
 
@@ -233,10 +242,11 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref } from 'vue'
-import { useRoute } from 'vue-router'
+import { computed, ref, onMounted } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
 
 import { useLedgerStore } from '../stores/ledger'
+import { useAuthStore } from '../stores/auth'
 
 interface NavItem {
   title: string
@@ -245,9 +255,27 @@ interface NavItem {
 }
 
 const route = useRoute()
+const router = useRouter()
 const ledgerStore = useLedgerStore()
+const authStore = useAuthStore()
 const dialog = ref(false)
 const ledgerDropdownOpen = ref(false)
+
+// ===== 当前登录用户（真实数据） =====
+const displayName = computed(() => authStore.displayName || '未登录')
+const userEmail = computed(() => authStore.user?.email ?? '')
+
+/** 退出登录：清 token 后回登录页 */
+const handleLogout = async () => {
+  await authStore.logout()
+  router.replace('/login')
+}
+
+// 布局挂载时拉取真实账本列表（登录后才有数据）
+onMounted(() => {
+  ledgerStore.loadLedgers()
+})
+
 const currentLedger = computed({
   get: () => ledgerStore.currentLedger,
   set: (val) => ledgerStore.setLedger(val)

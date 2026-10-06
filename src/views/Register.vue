@@ -1,7 +1,6 @@
 <template>
   <div class="login-canvas">
     <main class="login-shell">
-      <!-- 背景暖光 -->
       <div class="ambient ambient-1"></div>
       <div class="ambient ambient-2"></div>
 
@@ -25,15 +24,15 @@
         </div>
       </header>
 
-      <!-- 中间：左文案 + 右登录卡 -->
+      <!-- 中间：左文案 + 右注册卡 -->
       <div class="login-body lg:grid-cols-12">
         <section class="lg:col-span-7 hero">
           <h1 class="hero-title">
-            让每一笔家庭收支，<br />
-            <span class="text-primary" style="display: block; margin-top: 4px">都有温度与规划。</span>
+            创建家庭账本，<br />
+            <span class="text-primary" style="display: block; margin-top: 4px">让每笔收支都有归处。</span>
           </h1>
           <p class="hero-desc">
-            在细水长流的日常里，记录柴米油盐的踏实，也照见未来的心愿与自由。Mosic 以温润科技与自主认知算法，陪伴每一个家庭从容前行。
+            一个账号即可开启家庭协同记账：多人共享账本、按成员统计支出、智能票据识别入账。所有数据仅属于你的家庭。
           </p>
         </section>
 
@@ -41,63 +40,54 @@
           <div class="auth-card">
             <div style="margin-bottom: 24px">
               <div class="flex items-center justify-between" style="margin-bottom: 6px">
-                <h2 class="wordmark" style="font-size: 24px">Mosic</h2>
-                <span class="badge-security">Security Portal</span>
+                <h2 class="wordmark" style="font-size: 24px">注册 Mosic</h2>
+                <span class="badge-security">Create Account</span>
               </div>
-              <p class="text-xs text-on-surface-variant">开启属于你与家人的清晰账务与资产协同</p>
+              <p class="text-xs text-on-surface-variant">填写以下信息，立即创建你的家庭账本</p>
             </div>
 
-            <!-- 两个 tab -->
-            <div class="tabs">
-              <button
-                type="button"
-                class="tab"
-                :class="tab === 'pwd' ? 'tab-active' : 'tab-idle'"
-                @click="tab = 'pwd'"
-              >
-                密码登录
-              </button>
-              <button
-                type="button"
-                class="tab"
-                :class="tab === 'sms' ? 'tab-active' : 'tab-idle'"
-                @click="tab = 'sms'"
-              >
-                验证码登录
-              </button>
-            </div>
-
-            <!-- 密码登录 -->
-            <form v-if="tab === 'pwd'" class="form-stack" @submit.prevent="handleSubmit">
+            <form class="form-stack" @submit.prevent="handleSubmit">
               <div>
-                <label class="field-label" for="pwd-account">账号 / 手机号 / 邮箱</label>
+                <label class="field-label" for="reg-name">你的称呼</label>
                 <div class="field-wrap">
-                  <span class="material-symbols-outlined field-icon">account_circle</span>
+                  <span class="material-symbols-outlined field-icon">badge</span>
                   <input
-                    id="pwd-account"
-                    v-model.trim="email"
+                    id="reg-name"
+                    v-model.trim="form.name"
                     class="field-input"
                     type="text"
-                    placeholder="输入注册邮箱（演示：lin@mosaic.me）"
-                    autocomplete="username"
+                    placeholder="例如：林知栖"
+                    autocomplete="name"
                   />
                 </div>
               </div>
 
               <div>
-                <div class="flex items-center justify-between" style="margin-bottom: 6px">
-                  <label class="field-label" for="pwd-pass" style="margin: 0">登录密码</label>
-                  <span class="link-subtle">忘记密码？</span>
+                <label class="field-label" for="reg-email">邮箱</label>
+                <div class="field-wrap">
+                  <span class="material-symbols-outlined field-icon">mail</span>
+                  <input
+                    id="reg-email"
+                    v-model.trim="form.email"
+                    class="field-input"
+                    type="email"
+                    placeholder="用于登录与找回密码"
+                    autocomplete="email"
+                  />
                 </div>
+              </div>
+
+              <div>
+                <label class="field-label" for="reg-pass">登录密码</label>
                 <div class="field-wrap">
                   <span class="material-symbols-outlined field-icon">lock</span>
                   <input
-                    id="pwd-pass"
-                    v-model="password"
+                    id="reg-pass"
+                    v-model="form.password"
                     class="field-input"
                     :type="showPassword ? 'text' : 'password'"
-                    placeholder="输入登录密码"
-                    autocomplete="current-password"
+                    placeholder="至少 6 位字符"
+                    autocomplete="new-password"
                   />
                   <button type="button" class="field-action" @click="showPassword = !showPassword">
                     <span class="material-symbols-outlined" style="font-size: 18px">
@@ -107,40 +97,32 @@
                 </div>
               </div>
 
-              <label class="remember">
-                <input v-model="remember" type="checkbox" class="checkbox" />
-                <span class="text-xs text-on-surface-variant">30 天内保持免登录</span>
-              </label>
+              <div>
+                <label class="field-label" for="reg-pass2">确认密码</label>
+                <div class="field-wrap">
+                  <span class="material-symbols-outlined field-icon">lock_reset</span>
+                  <input
+                    id="reg-pass2"
+                    v-model="form.passwordConfirmation"
+                    class="field-input"
+                    :type="showPassword ? 'text' : 'password'"
+                    placeholder="再输入一次密码"
+                    autocomplete="new-password"
+                  />
+                </div>
+              </div>
 
               <p v-if="errorMessage" class="error-text">{{ errorMessage }}</p>
 
               <button type="submit" class="btn-primary" :disabled="loading">
-                <span>{{ loading ? '登录中…' : '立即登录' }}</span>
+                <span>{{ loading ? '创建中…' : '立即创建账本' }}</span>
                 <span class="material-symbols-outlined" style="font-size: 16px">arrow_forward</span>
               </button>
             </form>
 
-            <!-- 验证码登录（后端未实现，先占位） -->
-            <div v-else class="form-stack">
-              <div class="notice">
-                <span class="material-symbols-outlined" style="font-size: 18px">info</span>
-                <span>短信验证码登录需接入短信服务（当前为规划功能），请先用密码登录。</span>
-              </div>
-              <button type="button" class="btn-primary" @click="tab = 'pwd'">
-                <span>返回密码登录</span>
-              </button>
-            </div>
-
             <div class="register-line">
-              <span>还没有 Mosic 家庭账号？</span>
-              <span class="link-primary" style="margin-left: 4px" @click="goRegister">立即注册新账本</span>
-            </div>
-
-            <div class="divider"><span>极简快捷登录</span></div>
-
-            <div class="grid grid-cols-2" style="gap: 10px">
-              <button type="button" class="btn-third" disabled title="规划功能">微信扫码登录</button>
-              <button type="button" class="btn-third" disabled title="规划功能">Apple ID 登录</button>
+              <span>已经有 Mosic 账号？</span>
+              <span class="link-primary" style="margin-left: 4px" @click="goLogin">返回登录</span>
             </div>
 
             <p class="disclaimer">
@@ -153,7 +135,6 @@
         </section>
       </div>
 
-      <!-- 底部 -->
       <footer class="login-footer">
         <div class="flex items-center" style="gap: 16px">
           <span>© 2024 Mosic Financial Labs. 保留所有权利</span>
@@ -169,51 +150,64 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue'
-import { useRoute, useRouter } from 'vue-router'
+import { reactive, ref } from 'vue'
+import { useRouter } from 'vue-router'
 import { useAuthStore } from '../stores/auth'
 import { ApiError } from '../api/client'
 
 const router = useRouter()
-const route = useRoute()
 const authStore = useAuthStore()
 
-const tab = ref<'pwd' | 'sms'>('pwd')
-const email = ref('')
-const password = ref('')
-const remember = ref(true)
+const form = reactive({
+  name: '',
+  email: '',
+  password: '',
+  passwordConfirmation: ''
+})
+
 const showPassword = ref(false)
 const loading = ref(false)
 const errorMessage = ref('')
 
-/** 跳转注册页 */
-function goRegister() {
-  router.push('/register')
+/** 前端先做一轮校验，减少无意义的请求（后端仍会再校验一次） */
+function validate(): string {
+  if (!form.name) return '请填写你的称呼'
+  if (!form.email) return '请填写邮箱'
+  if (!/^\S+@\S+\.\S+$/.test(form.email)) return '邮箱格式不正确'
+  if (form.password.length < 6) return '密码至少 6 位字符'
+  if (form.password !== form.passwordConfirmation) return '两次输入的密码不一致'
+  return ''
 }
 
 async function handleSubmit() {
   errorMessage.value = ''
 
-  if (!email.value) {
-    errorMessage.value = '请输入账号邮箱'
-    return
-  }
-  if (!password.value) {
-    errorMessage.value = '请输入登录密码'
+  const invalid = validate()
+  if (invalid) {
+    errorMessage.value = invalid
     return
   }
 
   loading.value = true
   try {
-    await authStore.login(email.value, password.value)
-    // 登录成功：回到来时页面，没有就回首页
-    const redirect = (route.query.redirect as string) || '/home'
-    router.replace(redirect)
+    await authStore.register({
+      name: form.name,
+      email: form.email,
+      password: form.password,
+      password_confirmation: form.passwordConfirmation
+    })
+    // 后端注册成功即发 token（等于已登录）→ 直接进首页
+    router.replace('/home')
   } catch (e: any) {
-    errorMessage.value = e instanceof ApiError ? e.message : '登录失败，请稍后重试'
+    // 422 的字段错误（如邮箱已存在）在 client.ts 里已提取成可读文案
+    errorMessage.value = e instanceof ApiError ? e.message : '注册失败，请稍后重试'
   } finally {
     loading.value = false
   }
+}
+
+function goLogin() {
+  router.push('/login')
 }
 </script>
 
@@ -364,36 +358,6 @@ async function handleSubmit() {
   color: var(--color-primary);
 }
 
-.tabs {
-  display: flex;
-  padding: 4px;
-  margin-bottom: 24px;
-  border-radius: 12px;
-  border: 1px solid rgba(231, 226, 220, 0.5);
-  background: var(--color-surface-container-low);
-}
-.tab {
-  flex: 1;
-  padding: 8px 0;
-  border: 0;
-  border-radius: 8px;
-  font-size: 12px;
-  cursor: pointer;
-  transition: all 0.2s;
-  background: transparent;
-  font-family: inherit;
-}
-.tab-active {
-  background: #ffffff;
-  color: var(--color-on-surface);
-  font-weight: 600;
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.06);
-}
-.tab-idle {
-  color: var(--color-on-surface-variant);
-  font-weight: 500;
-}
-
 .form-stack > * + * {
   margin-top: 16px;
 }
@@ -452,19 +416,6 @@ async function handleSubmit() {
   color: var(--color-on-surface);
 }
 
-.remember {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  cursor: pointer;
-  user-select: none;
-}
-.checkbox {
-  width: 14px;
-  height: 14px;
-  accent-color: var(--color-primary);
-}
-
 .error-text {
   margin: 0;
   font-size: 12px;
@@ -501,19 +452,6 @@ async function handleSubmit() {
   cursor: not-allowed;
 }
 
-.notice {
-  display: flex;
-  align-items: flex-start;
-  gap: 8px;
-  padding: 12px;
-  border-radius: 12px;
-  border: 1px solid rgba(217, 119, 87, 0.3);
-  background: rgba(255, 219, 208, 0.3);
-  font-size: 12px;
-  line-height: 1.6;
-  color: var(--color-on-surface-variant);
-}
-
 .register-line {
   margin-top: 16px;
   text-align: center;
@@ -530,45 +468,6 @@ async function handleSubmit() {
   font-weight: 500;
   color: var(--color-primary);
   cursor: pointer;
-}
-
-.divider {
-  position: relative;
-  margin: 20px 0;
-  text-align: center;
-}
-.divider::before {
-  content: '';
-  position: absolute;
-  left: 0;
-  right: 0;
-  top: 50%;
-  border-top: 1px solid rgba(231, 226, 220, 0.7);
-}
-.divider span {
-  position: relative;
-  padding: 0 12px;
-  background: #ffffff;
-  font-size: 11px;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-  color: var(--color-outline);
-}
-
-.btn-third {
-  height: 40px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: 12px;
-  border: 1px solid rgba(231, 226, 220, 0.7);
-  background: #fcf9f6;
-  font-size: 12px;
-  font-weight: 500;
-  color: var(--color-on-surface);
-  font-family: inherit;
-  cursor: not-allowed;
-  opacity: 0.7;
 }
 
 .disclaimer {
@@ -591,9 +490,7 @@ async function handleSubmit() {
   color: var(--color-outline);
 }
 
-/* 响应式：宽屏下左右分栏、内边距加大 */
-/* 中等宽度（≥768px）就分栏：左 7 列文案 / 右 5 列登录卡
-   原来只有 ≥1024px 才分栏，窗口宽 813px 时会退化成上下堆叠 */
+/* 中等宽度（≥768px）就分栏：左 7 列文案 / 右 5 列注册卡 */
 @media (min-width: 768px) {
   .login-body {
     grid-template-columns: repeat(12, minmax(0, 1fr));

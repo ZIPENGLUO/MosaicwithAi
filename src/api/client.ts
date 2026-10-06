@@ -93,12 +93,25 @@ const http: AxiosInstance = axios.create({
     headers: { Accept: 'application/json' }
 })
 
-// ===== 请求拦截器：自动带上 JWT =====
+/** 语言：后端按 Accept-Language 决定校验消息语言（zh_CN / en / ja） */
+const LOCALE_KEY = 'mosaic_locale'
+
+export function getLocale(): string {
+    return localStorage.getItem(LOCALE_KEY) || 'zh-CN'
+}
+
+export function setLocale(locale: string) {
+    localStorage.setItem(LOCALE_KEY, locale)
+}
+
+// ===== 请求拦截器：自动带上 JWT 与语言 =====
 http.interceptors.request.use((config) => {
     const token = getToken()
     if (token) {
         config.headers.Authorization = `Bearer ${token}`
     }
+    // 语言头：后端 SetLocale 中间件据此切换校验消息语言
+    config.headers['Accept-Language'] = getLocale()
     return config
 })
 
