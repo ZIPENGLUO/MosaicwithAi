@@ -187,6 +187,22 @@
           <span class="text-xs text-on-surface-variant font-normal">{{ currentLedger }}</span>
         </v-card-title>
         <v-card-text class="px-0 pt-3">
+          <!-- 支出 / 收入：决定下面能选哪些分类 -->
+          <div class="flex rounded-xl overflow-hidden mb-3 border border-outline-variant/40">
+            <button
+              v-for="opt in billTypeOptions"
+              :key="opt.value"
+              type="button"
+              class="flex-1 py-2 text-xs font-semibold transition-colors cursor-pointer"
+              :class="quickBill.type === opt.value
+                ? 'bg-primary-container text-on-primary'
+                : 'bg-surface-container-low text-on-surface-variant hover:bg-surface-container'"
+              @click="switchBillType(opt.value)"
+            >
+              {{ opt.title }}
+            </button>
+          </div>
+
           <v-text-field
             v-model="quickBill.amount"
             label="记账金额"
@@ -196,14 +212,21 @@
             density="comfortable"
             class="mb-3 font-amount-table"
           />
+
+          <!-- 分类：来自后端全局分类树（两级，这里展示子类并标注所属大类） -->
           <v-select
-            v-model="quickBill.category"
-            label="归属品类"
-            :items="['餐饮美食', '居家生活', '教育学习', '休闲出行', '医疗保健', '工资收益', '理财分红']"
+            v-model="quickBill.categoryId"
+            :items="categoryOptions"
+            item-title="label"
+            item-value="value"
+            :label="`归属分类（${quickBill.type === 'expense' ? '支出' : '收入'}）`"
+            :loading="loadingCategories"
+            :no-data-text="categoryOptions.length ? '没有可选分类' : '分类加载中或后端未启动'"
             variant="outlined"
             density="comfortable"
             class="mb-3"
           />
+
           <v-text-field
             v-model="quickBill.remark"
             label="商户或用途备注"
@@ -212,10 +235,16 @@
             density="comfortable"
             class="mb-3"
           />
+
+          <!-- 支付账户：来自后端 /api/accounts（属于个人，跨账本复用） -->
           <v-select
-            v-model="quickBill.member"
-            label="账目承担方"
-            :items="['账本主账户', '林知栖 (本人)', '陈先生']"
+            v-model="quickBill.accountId"
+            :items="accountOptions"
+            item-title="label"
+            item-value="value"
+            label="支付方式"
+            :loading="loadingAccounts"
+            :no-data-text="accountOptions.length ? '没有可用账户' : '账户加载中或后端未启动'"
             variant="outlined"
             density="comfortable"
           />
@@ -247,6 +276,9 @@ import { useRoute, useRouter } from 'vue-router'
 
 import { useLedgerStore } from '../stores/ledger'
 import { useAuthStore } from '../stores/auth'
+import { categoryApi, flattenLeaves } from '../api/category'
+import { accountApi } from '../api/account'
+import type { CategoryGroup, CategoryType } from '../interfaces'
 
 interface NavItem {
   title: string
@@ -274,6 +306,8 @@ const handleLogout = async () => {
 // 布局挂载时拉取真实账本列表（登录后才有数据）
 onMounted(() => {
   ledgerStore.loadLedgers()
+  loadCategories()
+  loadAccounts()
 })
 
 const currentLedger = computed({
@@ -283,12 +317,70 @@ const currentLedger = computed({
 
 const ledgers = ledgerStore.ledgers
 
+// ===== 快速记账：分类与账户都来自后端 =====
+const billTypeOptions: Array<{ title: string; value: CategoryType }> = [
+  { title: '支出', value: 'expense' },
+  { title: '收入', value: 'income' }
+]
+
+/** 后端返回的分类树（顶层含 children） */
+const categoryGroups = ref<CategoryGroup[]>([])
+const loadingCategories = ref(false)
+
+/** 后端返回的支付账户 */
+const accountOptions = ref<Array<{ label: string; value: number }>>([])
+const loadingAccounts = ref(false)
+
 const quickBill = ref({
+  type: 'expense' as CategoryType,
   amount: '',
-  category: '餐饮美食',
-  remark: '',
-  member: '账本主账户'
+  categoryId: null as number | null,
+  accountId: null as number | null,
+  remark: ''
 })
+
+/** 当前收支类型下可选的分类（拍平成"大类 · 子类"标签） */
+const categoryOptions = computed(() => {
+  const groups = categoryGroups.value.filter(g => g.type === quickBill.value.type)
+  return flattenLeaves(groups).map(leaf => ({
+    label: `${leaf.parentName} · ${leaf.name}`,
+    value: leaf.id
+  }))
+})
+
+/** 切换支出/收入时清掉已选分类，避免选到另一类型的分类 */
+function switchBillType(type: CategoryType) {
+  if (quickBill.value.type === type) return
+  quickBill.value.type = type
+  quickBill.value.categoryId = null
+}
+
+async function loadCategories() {
+  loadingCategories.value = true
+  try {
+    categoryGroups.value = await categoryApi.tree()
+  } catch {
+    categoryGroups.value = []
+  } finally {
+    loadingCategories.value = false
+  }
+}
+
+async function loadAccounts() {
+  loadingAccounts.value = true
+  try {
+    const list = await accountApi.list()
+    accountOptions.value = (list ?? []).map(a => ({ label: a.name, value: a.id }))
+    // 默认选中第一个账户，省一次点击
+    if (! quickBill.value.accountId && accountOptions.value.length) {
+      quickBill.value.accountId = accountOptions.value[0].value
+    }
+  } catch {
+    accountOptions.value = []
+  } finally {
+    loadingAccounts.value = false
+  }
+}
 
 const navItems = computed<NavItem[]>(() => [
   { title: '首页概览', to: '/home', icon: 'dashboard' },
@@ -331,10 +423,37 @@ const saveQuickBill = () => {
     alert('请输入记账金额')
     return
   }
+  if (!quickBill.value.categoryId) {
+    alert('请选择归属分类')
+    return
+  }
+  if (!quickBill.value.accountId) {
+    alert('请选择支付方式')
+    return
+  }
+
+  const categoryLabel = categoryOptions.value.find(o => o.value === quickBill.value.categoryId)?.label ?? ''
+  const accountLabel = accountOptions.value.find(o => o.value === quickBill.value.accountId)?.label ?? ''
+  const typeLabel = quickBill.value.type === 'expense' ? '支出' : '收入'
+
   dialog.value = false
-  alert(`记账成功！已为「${currentLedger.value}」记录 ¥${quickBill.value.amount} (${quickBill.value.category})`)
+  // ⚠️ 暂时只做前端提示：后端"流水 CRUD（阶段 4）"还没做，
+  //    等 POST /api/transactions 就绪后，这里换成真实提交：
+  //    await transactionApi.create({ ledger_id, type, amount, category_id, account_id, remark })
+  alert(
+    `【待接入】已收集到完整记账数据：\n\n` +
+    `账本：${currentLedger.value}\n` +
+    `类型：${typeLabel}\n` +
+    `金额：¥${quickBill.value.amount}\n` +
+    `分类：${categoryLabel}\n` +
+    `支付方式：${accountLabel}\n` +
+    `备注：${quickBill.value.remark || '（无）'}\n\n` +
+    `后端流水接口（阶段 4）完成后即可真正入账。`
+  )
+
   quickBill.value.amount = ''
   quickBill.value.remark = ''
+  quickBill.value.categoryId = null
 }
 
 const handleExport = () => {
