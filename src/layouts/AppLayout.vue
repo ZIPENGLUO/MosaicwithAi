@@ -312,7 +312,8 @@ onMounted(() => {
 
 const currentLedger = computed({
   get: () => ledgerStore.currentLedger,
-  set: (val) => ledgerStore.setLedger(val)
+  // setLedger 是异步的（切换账本后要重新拉成员），这里 fire-and-forget 即可
+  set: (val) => { void ledgerStore.setLedger(val) }
 })
 
 const ledgers = ledgerStore.ledgers
@@ -388,7 +389,7 @@ const navItems = computed<NavItem[]>(() => [
   { title: '财务日历', to: '/calendar', icon: 'calendar_month' },
   { title: '账目明细', to: '/bills', icon: 'receipt_long' },
   { title: '统计分析', to: '/analytics', icon: 'pie_chart' },
-  { title: ledgerStore.hasMultipleMembers ? '家庭协同' : '协同共享', to: '/family', icon: 'diversity_3' }
+  { title: ledgerStore.hasMultipleMembers ? '协作共享' : '账本设置', to: '/family', icon: 'diversity_3' }
 ])
 
 const isActive = (path: string) => {
@@ -411,8 +412,8 @@ const currentSubtitle = computed(() => {
   if (route.path === '/analytics') return '财富资产负债与消费结构全景分析'
   if (route.path === '/family') {
     return ledgerStore.hasMultipleMembers
-      ? '家庭成员分摊协作、共同资金池与账本权限管理'
-      : '账本协同共享、授权访问与权限管理'
+      ? '账本成员协作、共同资金池与权限管理'
+      : '账本基本信息与协作设置'
   }
   if (route.path === '/settings') return '账本偏好与账户安全隐私设置'
   return ''

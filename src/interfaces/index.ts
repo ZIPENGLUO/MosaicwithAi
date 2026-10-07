@@ -8,6 +8,6 @@
  */
 
 export type { User, AuthResult, LoginPayload, RegisterPayload } from './auth'
-export type { Ledger, LedgerPayload, LedgerConfig, LedgerMember } from './ledger'
+export type { Ledger, LedgerPayload, LedgerConfig, LedgerMember, LedgerMemberView } from './ledger'
 export type { Account, AccountPayload, AccountUpdatePayload } from './account'
 export type { Category, CategoryGroup, CategoryType } from './category'

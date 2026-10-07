@@ -588,8 +588,10 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue'
 import { useLedgerStore } from '../stores/ledger'
+import { useAuthStore } from '../stores/auth'
 
 const ledgerStore = useLedgerStore()
+const authStore = useAuthStore()
 
 // 1. 分类标签
 interface NavTab {
@@ -700,7 +702,9 @@ const saveAllSettings = () => {
   setTimeout(() => {
     isSaving.value = false
     // 联动更新 Pinia Store 当前用户昵称与头像
-    const currentMember = ledgerStore.currentMembers.find(m => m.id === 'lin')
+    // 成员 id 是后端返回的数字 user_id；这里找"当前登录用户"自己那条
+    const me = authStore.user
+    const currentMember = ledgerStore.currentMembers.find(m => m.id === me?.id)
     if (currentMember) {
       currentMember.name = profileForm.value.nickname
       const allAv = [...primaryAvatars, ...extendedAvatars]

@@ -682,8 +682,8 @@ const timeTabs = [
 ]
 const activeTab = ref<'trend' | 'quarter' | 'year'>('trend')
 
-// 成员筛选：默认全部
-const activeMemberId = ref('all')
+// 成员筛选：'all' = 全部成员；数字 = 具体成员的 user_id（成员 id 来自后端，是数字）
+const activeMemberId = ref<'all' | number>('all')
 
 const currentDateRangeText = computed(() => {
   if (activeTab.value === 'trend') return '2024年 1月 - 10月'
@@ -796,7 +796,11 @@ const currentKpi = computed(() => {
   if (!ledgerStore.hasMultipleMembers) {
     return kpiDictionary.lin
   }
-  const key = (activeMemberId.value === 'chen' || activeMemberId.value === 'lin') ? activeMemberId.value : 'all'
+  // ⚠️ mock 阶段：KPI 矩阵仍是写死的演示数据，键为 'lin' / 'chen'。
+  //    真实成员 id 是数字 user_id，这里转成字符串再比对；
+  //    阶段 5 接入真实统计接口后，这些 mock 矩阵会被整体替换。
+  const id = String(activeMemberId.value)
+  const key: 'all' | 'lin' | 'chen' = (id === 'chen' || id === 'lin') ? id : 'all'
   return kpiDictionary[key]
 })
 
@@ -918,13 +922,15 @@ const currentExpenseBreakdown = computed(() => {
   if (!ledgerStore.hasMultipleMembers) {
     return expenseBreakdownMatrix.lin
   }
-  const key = (activeMemberId.value === 'chen' || activeMemberId.value === 'lin') ? activeMemberId.value : 'all'
+  // 同上：mock 矩阵的键是 'lin' / 'chen'（阶段 5 接入真实统计后替换）
+  const id = String(activeMemberId.value)
+  const key: 'all' | 'lin' | 'chen' = (id === 'chen' || id === 'lin') ? id : 'all'
   return expenseBreakdownMatrix[key]
 })
 
-// 家庭成员支出分布数据模型
+// 成员支出分布数据模型（id 用后端返回的 user_id：数字）
 interface MemberDivision {
-  id: string
+  id: number
   name: string
   role: string
   avatar: string
@@ -938,7 +944,7 @@ interface MemberDivision {
 
 const allDivisionList: MemberDivision[] = [
   {
-    id: 'lin',
+    id: 1,
     name: '林知栖',
     role: '主理人',
     avatar: '/avatars/user-lin.png',
@@ -954,7 +960,7 @@ const allDivisionList: MemberDivision[] = [
     ]
   },
   {
-    id: 'chen',
+    id: 2,
     name: '陈先生',
     role: '协同人',
     avatar: '/avatars/member-chen.png',
@@ -970,7 +976,7 @@ const allDivisionList: MemberDivision[] = [
     ]
   },
   {
-    id: 'child',
+    id: 3,
     name: '林小满',
     role: '孩子',
     avatar: '/avatars/刘海女孩.png',
@@ -986,7 +992,7 @@ const allDivisionList: MemberDivision[] = [
     ]
   },
   {
-    id: 'elder',
+    id: 4,
     name: '苏外婆',
     role: '长辈',
     avatar: '/avatars/白发老奶奶.png',
@@ -1008,7 +1014,7 @@ const currentDivisionList = computed(() => {
   if (!ledgerStore.hasMultipleMembers) {
     return [
       {
-        id: 'lin',
+        id: 1,
         name: '林知栖',
         role: '账本专属人',
         avatar: '/avatars/user-lin.png',
@@ -1028,7 +1034,8 @@ const currentDivisionList = computed(() => {
   return allDivisionList
 })
 
-const activeDivisionMemberId = ref('lin')
+// 成员分工焦点：存的是成员 user_id（数字）。默认取第一位成员。
+const activeDivisionMemberId = ref<number>(ledgerStore.currentMembers[0]?.id ?? 1)
 
 const focusedDivisionMember = computed(() => {
   return currentDivisionList.value.find(m => m.id === activeDivisionMemberId.value) || currentDivisionList.value[0]
@@ -1177,7 +1184,11 @@ const onCategoryLeave = () => {
 const updateTrendChart = () => {
   if (!trendChart) return
 
-  const memberKey = !ledgerStore.hasMultipleMembers ? 'lin' : (activeMemberId.value === 'chen' || activeMemberId.value === 'lin' ? activeMemberId.value : 'all')
+  // 同上：mock 趋势矩阵的键是 'lin' / 'chen'（阶段 5 接入真实统计后替换）
+  const id = String(activeMemberId.value)
+  const memberKey: 'all' | 'lin' | 'chen' = !ledgerStore.hasMultipleMembers
+    ? 'lin'
+    : ((id === 'chen' || id === 'lin') ? id : 'all')
   const dataset = trendDataMatrix[activeTab.value][memberKey]
   const savings = dataset.incomes.map((inc, i) => inc - dataset.expenses[i])
 
@@ -1481,7 +1492,7 @@ const switchTimeTab = (tabId: 'trend' | 'quarter' | 'year') => {
   })
 }
 
-const switchMember = (memberId: string) => {
+const switchMember = (memberId: 'all' | number) => {
   activeMemberId.value = memberId
   if (memberId !== 'all') {
     activeDivisionMemberId.value = memberId
@@ -1495,7 +1506,7 @@ const switchMember = (memberId: string) => {
 // 监听 Pinia 账本切换，平滑刷新所有图表与指标
 watch(() => ledgerStore.currentLedger, () => {
   activeMemberId.value = 'all'
-  activeDivisionMemberId.value = 'lin'
+  activeDivisionMemberId.value = ledgerStore.currentMembers[0]?.id ?? 1
   nextTick(() => {
     updateTrendChart()
     updatePieChart()
