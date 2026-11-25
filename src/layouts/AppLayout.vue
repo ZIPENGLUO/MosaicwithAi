@@ -19,7 +19,7 @@
           >
             <div class="flex items-center gap-1.5 min-w-0">
               <span class="material-symbols-outlined text-secondary text-sm">folder_shared</span>
-              <span class="font-label-md text-xs text-on-surface font-medium truncate">{{ currentLedger }}</span>
+              <span class="font-label-md text-xs text-on-surface font-medium truncate">{{ currentLedger || '暂无账本' }}</span>
             </div>
             <span class="material-symbols-outlined text-on-surface-variant text-xs transition-transform" :class="{ 'rotate-180': ledgerDropdownOpen }">unfold_more</span>
           </div>
@@ -31,7 +31,7 @@
           >
             <button
               v-for="l in ledgers"
-              :key="l.name"
+              :key="l.id"
               class="w-full flex items-center justify-between px-2 py-1.5 rounded-lg text-left text-xs transition-colors"
               :class="currentLedger === l.name ? 'bg-primary/10 text-primary font-semibold' : 'text-on-surface hover:bg-surface-container-low'"
               type="button"
@@ -39,6 +39,11 @@
             >
               <span class="truncate">{{ l.name }}</span>
               <span v-if="currentLedger === l.name" class="material-symbols-outlined text-xs text-primary">check</span>
+            </button>
+            <div class="border-t border-outline-variant/30 my-1"></div>
+            <button type="button" class="w-full flex items-center gap-1.5 px-2 py-2 rounded-lg text-left text-xs text-primary hover:bg-primary/10 transition-colors" @click="openCreateLedger">
+              <span class="material-symbols-outlined text-sm">add</span>
+              新增账本
             </button>
           </div>
         </div>
@@ -86,7 +91,7 @@
           >
             <div class="relative shrink-0">
               <img
-                src="/avatars/user-lin.png"
+                :src="authStore.user?.avatar || '/avatars/user-lin.png'"
                 :alt="displayName"
                 class="w-8 h-8 rounded-full object-cover border border-outline-variant/30 shadow-sm"
               />
@@ -159,12 +164,7 @@
           </button>
 
           <!-- 消息通知 -->
-          <div
-            class="relative flex items-center justify-center w-8 h-8 rounded-full bg-surface-container-lowest text-on-surface-variant hover:text-on-surface border border-outline-variant/30 transition-colors shadow-sm"
-          >
-            <span class="material-symbols-outlined text-base">notifications</span>
-            <span class="absolute top-1.5 right-1.5 w-1.5 h-1.5 rounded-full bg-tertiary"></span>
-          </div>
+          <NotificationBell />
         </div>
       </header>
 
@@ -175,7 +175,7 @@
     </div>
 
     <!-- 快速记账弹窗 -->
-    <v-dialog v-model="dialog" max-width="480">
+    <v-dialog :persistent="savingQuickBill" v-model="dialog" max-width="480">
       <v-card class="rounded-2xl pa-4 bg-surface-container-lowest border border-outline-variant/30">
         <v-card-title class="font-headline-sm text-lg font-bold text-on-surface px-0 pt-0 flex items-center justify-between">
           <div class="flex items-center gap-2">
@@ -244,11 +244,13 @@
             item-value="value"
             label="支付方式"
             :loading="loadingAccounts"
-            :no-data-text="accountOptions.length ? '没有可用账户' : '账户加载中或后端未启动'"
+            :no-data-text="loadingAccounts ? '正在加载支付方式' : '暂无可用支付方式，请前往设置添加'"
             variant="outlined"
             density="comfortable"
           />
+          <button v-if="!loadingAccounts && !accountOptions.length" type="button" class="text-primary text-sm" @click="dialog = false; router.push('/settings?setup=1')">前往设置添加支付方式</button>
         </v-card-text>
+        <p v-if="quickBillError" role="alert" class="text-red-600 text-sm">{{ quickBillError }}</p>
         <v-card-actions class="px-0 pb-0 flex justify-end gap-2">
           <button
             class="px-3.5 py-1.5 rounded-lg text-xs font-medium text-on-surface-variant hover:bg-surface-container transition-colors cursor-pointer"
@@ -260,24 +262,42 @@
           <button
             class="px-4 py-1.5 rounded-lg bg-primary-container hover:bg-primary text-on-primary text-xs font-semibold shadow-sm transition-colors cursor-pointer"
             type="button"
+            :disabled="savingQuickBill"
             @click="saveQuickBill"
           >
-            确认记账
+            {{ savingQuickBill ? '保存中…' : '确认记账' }}
           </button>
         </v-card-actions>
+      </v-card>
+    </v-dialog>
+    <v-dialog v-model="createLedgerDialog" max-width="420" :persistent="creatingLedger">
+      <v-card rounded="xl">
+        <form @submit.prevent="submitCreateLedger">
+          <v-card-title class="pt-5 px-6">新增账本</v-card-title>
+          <v-card-text>
+            <v-text-field v-model="newLedgerName" label="账本名称" placeholder="例如：日常生活、旅行计划" maxlength="100" counter variant="outlined" autofocus :disabled="creatingLedger" :error-messages="createLedgerError" @update:model-value="createLedgerError = ''" />
+          </v-card-text>
+          <v-card-actions class="px-6 pb-5">
+            <v-spacer />
+            <v-btn :disabled="creatingLedger" @click="createLedgerDialog = false">取消</v-btn>
+            <v-btn type="submit" color="primary" variant="flat" :loading="creatingLedger" :disabled="!newLedgerName.trim()">创建账本</v-btn>
+          </v-card-actions>
+        </form>
       </v-card>
     </v-dialog>
   </div>
 </template>
 
 <script setup lang="ts">
-import { computed, ref, onMounted } from 'vue'
+import { computed, ref, onMounted, onUnmounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 
 import { useLedgerStore } from '../stores/ledger'
+import NotificationBell from '../components/NotificationBell.vue'
 import { useAuthStore } from '../stores/auth'
 import { categoryApi, flattenLeaves } from '../api/category'
 import { accountApi } from '../api/account'
+import { transactionApi, localDateTime } from '../api/transaction'
 import type { CategoryGroup, CategoryType } from '../interfaces'
 
 interface NavItem {
@@ -292,6 +312,36 @@ const ledgerStore = useLedgerStore()
 const authStore = useAuthStore()
 const dialog = ref(false)
 const ledgerDropdownOpen = ref(false)
+const createLedgerDialog = ref(false)
+const newLedgerName = ref('')
+const creatingLedger = ref(false)
+const createLedgerError = ref('')
+
+function openCreateLedger() {
+  ledgerDropdownOpen.value = false
+  newLedgerName.value = ''
+  createLedgerError.value = ''
+  createLedgerDialog.value = true
+}
+
+async function submitCreateLedger() {
+  if (creatingLedger.value) return
+  const name = newLedgerName.value.trim()
+  if (!name || Array.from(name).length > 100) {
+    createLedgerError.value = '请输入不超过 100 个字符的账本名称'
+    return
+  }
+  creatingLedger.value = true
+  createLedgerError.value = ''
+  try {
+    await ledgerStore.createLedger(name)
+    createLedgerDialog.value = false
+  } catch (error) {
+    createLedgerError.value = error instanceof Error ? error.message : '创建失败，请稍后重试'
+  } finally {
+    creatingLedger.value = false
+  }
+}
 
 // ===== 当前登录用户（真实数据） =====
 const displayName = computed(() => authStore.displayName || '未登录')
@@ -308,7 +358,9 @@ onMounted(() => {
   ledgerStore.loadLedgers()
   loadCategories()
   loadAccounts()
+  window.addEventListener('payment-accounts-updated', loadAccounts)
 })
+onUnmounted(() => window.removeEventListener('payment-accounts-updated', loadAccounts))
 
 const currentLedger = computed({
   get: () => ledgerStore.currentLedger,
@@ -316,7 +368,7 @@ const currentLedger = computed({
   set: (val) => { void ledgerStore.setLedger(val) }
 })
 
-const ledgers = ledgerStore.ledgers
+const ledgers = computed(() => ledgerStore.ledgers)
 
 // ===== 快速记账：分类与账户都来自后端 =====
 const billTypeOptions: Array<{ title: string; value: CategoryType }> = [
@@ -373,11 +425,12 @@ async function loadAccounts() {
     const list = await accountApi.list()
     accountOptions.value = (list ?? []).map(a => ({ label: a.name, value: a.id }))
     // 默认选中第一个账户，省一次点击
-    if (! quickBill.value.accountId && accountOptions.value.length) {
-      quickBill.value.accountId = accountOptions.value[0].value
+    if (!accountOptions.value.some(a => a.value === quickBill.value.accountId)) {
+      quickBill.value.accountId = accountOptions.value[0]?.value ?? null
     }
   } catch {
     accountOptions.value = []
+    quickBill.value.accountId = null
   } finally {
     loadingAccounts.value = false
   }
@@ -419,42 +472,27 @@ const currentSubtitle = computed(() => {
   return ''
 })
 
-const saveQuickBill = () => {
-  if (!quickBill.value.amount) {
-    alert('请输入记账金额')
-    return
-  }
-  if (!quickBill.value.categoryId) {
-    alert('请选择归属分类')
-    return
-  }
-  if (!quickBill.value.accountId) {
-    alert('请选择支付方式')
-    return
-  }
-
-  const categoryLabel = categoryOptions.value.find(o => o.value === quickBill.value.categoryId)?.label ?? ''
-  const accountLabel = accountOptions.value.find(o => o.value === quickBill.value.accountId)?.label ?? ''
-  const typeLabel = quickBill.value.type === 'expense' ? '支出' : '收入'
-
-  dialog.value = false
-  // ⚠️ 暂时只做前端提示：后端"流水 CRUD（阶段 4）"还没做，
-  //    等 POST /api/transactions 就绪后，这里换成真实提交：
-  //    await transactionApi.create({ ledger_id, type, amount, category_id, account_id, remark })
-  alert(
-    `【待接入】已收集到完整记账数据：\n\n` +
-    `账本：${currentLedger.value}\n` +
-    `类型：${typeLabel}\n` +
-    `金额：¥${quickBill.value.amount}\n` +
-    `分类：${categoryLabel}\n` +
-    `支付方式：${accountLabel}\n` +
-    `备注：${quickBill.value.remark || '（无）'}\n\n` +
-    `后端流水接口（阶段 4）完成后即可真正入账。`
-  )
-
-  quickBill.value.amount = ''
-  quickBill.value.remark = ''
-  quickBill.value.categoryId = null
+const savingQuickBill = ref(false)
+const quickBillError = ref('')
+const saveQuickBill = async () => {
+  if (savingQuickBill.value) return
+  quickBillError.value = ''
+  const ledgerId = ledgerStore.currentLedgerId
+  if (!ledgerId) { quickBillError.value = '请先选择账本'; return }
+  if (!Number.isFinite(Number(quickBill.value.amount)) || Number(quickBill.value.amount) < 0.01) { quickBillError.value = '请输入有效金额（至少 0.01）'; return }
+  if (!quickBill.value.categoryId || !quickBill.value.accountId) { quickBillError.value = '请选择分类和支付方式'; return }
+  savingQuickBill.value = true
+  try {
+    await transactionApi.create(ledgerId, {
+      type: quickBill.value.type, amount: quickBill.value.amount,
+      category_id: quickBill.value.categoryId, account_id: quickBill.value.accountId,
+      occurred_at: localDateTime(), note: quickBill.value.remark, source: 'manual'
+    })
+    dialog.value = false
+    quickBill.value.amount = ''; quickBill.value.remark = ''; quickBill.value.categoryId = null
+    window.dispatchEvent(new Event('transactions-updated'))
+  } catch (e) { quickBillError.value = e instanceof Error ? e.message : '记账失败，请重试' }
+  finally { savingQuickBill.value = false }
 }
 
 const handleExport = () => {

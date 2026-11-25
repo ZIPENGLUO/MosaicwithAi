@@ -1,5 +1,8 @@
 <template>
   <div class="w-full max-w-[1640px] mx-auto p-6 flex flex-col gap-6 min-h-full justify-between" style="background-color: #fcf9f6">
+    <p v-if="loadError" role="alert" class="text-red-600 text-sm">{{ loadError }} <button type="button" class="underline" @click="loadDashboard">重试</button></p>
+    <p v-if="loading" class="text-sm text-on-surface-variant">正在加载统计…</p>
+    <p v-else-if="!ledgerStore.currentLedgerId" class="text-sm">请选择或创建账本</p>
     <!-- 顶部 3 项核心财务健康度指标 (水平卡片平铺，高度扩充，字体全面加大) -->
     <div class="grid grid-cols-1 md:grid-cols-3 gap-5 shrink-0">
       <!-- 本月总支出 -->
@@ -11,16 +14,16 @@
           <span
             class="inline-flex items-center px-2.5 py-1 rounded-full bg-primary-fixed text-on-primary-fixed-variant text-xs font-semibold"
           >
-            -8.2% 较上月
+            本月累计
           </span>
         </div>
         <div class="my-2 flex items-baseline">
-          <span class="font-amount-display text-4xl lg:text-[42px] text-on-surface font-extrabold leading-none">¥ 12,480</span>
-          <span class="font-amount-table text-base text-on-surface-variant ml-0.5">.50</span>
+          <span class="font-amount-display text-4xl lg:text-[42px] text-on-surface font-extrabold leading-none">¥ {{ money(summary.expense) }}</span>
+          <span class="font-amount-table text-base text-on-surface-variant ml-0.5"></span>
         </div>
         <div class="flex items-center justify-between text-xs text-on-surface-variant pt-1 border-t border-surface-container-low">
-          <span>结余可支配度高 · 较上月省 ¥1,114</span>
-          <span class="font-semibold text-primary">已用 69.3%</span>
+          <span>按当前账本已记录流水汇总</span>
+          <span class="font-semibold text-primary"></span>
         </div>
       </div>
 
@@ -33,16 +36,16 @@
           <span
             class="inline-flex items-center px-2.5 py-1 rounded-full bg-secondary-fixed text-on-secondary-fixed-variant text-xs font-semibold"
           >
-            入账充盈
+            本月累计
           </span>
         </div>
         <div class="my-2 flex items-baseline">
-          <span class="font-amount-display text-4xl lg:text-[42px] text-on-surface font-extrabold leading-none">¥ 28,500</span>
-          <span class="font-amount-table text-base text-on-surface-variant ml-0.5">.00</span>
+          <span class="font-amount-display text-4xl lg:text-[42px] text-on-surface font-extrabold leading-none">¥ {{ money(summary.income) }}</span>
+          <span class="font-amount-table text-base text-on-surface-variant ml-0.5"></span>
         </div>
         <div class="flex items-center justify-between text-xs text-on-surface-variant pt-1 border-t border-surface-container-low">
-          <span>工资薪酬到账 + 稳健理财分红</span>
-          <span class="font-semibold text-secondary">达成率 100%</span>
+          <span>按实际入账日期统计</span>
+          <span class="font-semibold text-secondary"></span>
         </div>
       </div>
 
@@ -55,16 +58,16 @@
           <span
             class="inline-flex items-center px-2.5 py-1 rounded-full bg-surface-container-high text-on-surface text-xs font-semibold"
           >
-            达成率 112%
+            收入减支出
           </span>
         </div>
         <div class="my-2 flex items-baseline gap-1">
-          <span class="font-amount-display text-4xl lg:text-[42px] text-secondary font-extrabold leading-none">¥ 16,019</span>
-          <span class="font-amount-table text-base text-secondary font-semibold">.50</span>
+          <span class="font-amount-display text-4xl lg:text-[42px] text-secondary font-extrabold leading-none">¥ {{ money(summary.net) }}</span>
+          <span class="font-amount-table text-base text-secondary font-semibold"></span>
         </div>
         <div class="flex items-center justify-between text-xs text-secondary font-medium pt-1 border-t border-surface-container-low">
-          <span>应急储备充足 · 储蓄无忧</span>
-          <span class="font-bold">储蓄率 56.2%</span>
+          <span>本月收入 − 本月支出</span>
+          <span class="font-bold"></span>
         </div>
       </div>
     </div>
@@ -158,7 +161,7 @@
             <div class="flex items-center justify-between shrink-0 mb-2">
               <div class="flex items-center gap-2">
                 <span class="material-symbols-outlined text-primary text-lg">track_changes</span>
-                <h3 class="font-headline-sm text-base font-bold text-on-surface">预算执行监控</h3>
+                <h3 class="font-headline-sm text-base font-bold text-on-surface">预算执行监控（演示）</h3>
               </div>
               <span class="font-label-md text-xs text-on-surface-variant font-medium">4月 (余 9 天)</span>
             </div>
@@ -208,7 +211,7 @@
           >
             <div class="flex items-center justify-between mb-2 shrink-0">
               <h3 class="font-headline-sm text-base font-bold text-on-surface">分类支出构成</h3>
-              <span class="font-label-md text-xs text-on-surface-variant font-medium">总支出 ¥12,480.50</span>
+              <span class="font-label-md text-xs text-on-surface-variant font-medium">本月支出 ¥{{ money(summary.expense) }}</span>
             </div>
 
             <div class="flex items-center justify-between gap-4 my-auto">
@@ -319,13 +322,14 @@
               <span class="font-headline-sm text-base text-on-surface font-bold">知栖 AI 智能财务伴侣</span>
             </div>
             <span class="text-xs px-2.5 py-0.5 rounded-full bg-primary/10 text-primary font-semibold"
-              >刚刚更新</span
+              >演示内容</span
             >
           </div>
 
           <div
             class="p-4 rounded-xl bg-surface-container-lowest/95 backdrop-blur-sm shadow-sm flex flex-col gap-3 text-xs leading-relaxed border border-outline-variant/20 my-auto"
           >
+            <p class="text-on-surface-variant">以下为功能演示，尚未生成真实 AI 分析。</p>
             <p class="text-on-surface">💡 <strong>餐饮预警：</strong> 聚会与大宗食材支出达上限 78%，周末建议尝试手工轻食烘焙，健康又省心。</p>
             <p class="text-on-surface pt-2 border-t border-surface-container-high/60">
               🌿 <strong>目标结余：</strong> 储蓄状态充盈，完全可达成
@@ -341,7 +345,7 @@
 
           <div class="flex items-center justify-between pt-3 mt-1 border-t border-surface-container-low text-xs">
             <span class="text-on-surface-variant font-medium">财务平和度 88% · 恬适健康</span>
-            <span class="text-primary font-bold">AI 实时守护中</span>
+            <span class="text-primary font-bold">AI 分析待接入</span>
           </div>
         </div>
       </div>
@@ -350,8 +354,17 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, onUnmounted, nextTick } from "vue";
+import { ref, computed, watch, onMounted, onUnmounted, nextTick } from "vue";
 import * as echarts from "echarts";
+import { useLedgerStore } from '../stores/ledger';
+import { dashboardApi, type Dashboard } from '../api/dashboard';
+const ledgerStore = useLedgerStore();
+const dashboard = ref<Dashboard | null>(null);
+const loading = ref(false);
+const loadError = ref('');
+let requestVersion = 0;
+const money = (value: number) => value.toLocaleString('zh-CN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+const summary = computed(() => dashboard.value?.summary ?? { income: 0, expense: 0, net: 0 });
 
 const trendChartRef = ref<HTMLDivElement | null>(null);
 const pieChartRef = ref<HTMLDivElement | null>(null);
@@ -370,8 +383,8 @@ const activeRange = ref<"30d" | "14d" | "7d">("30d");
 
 // 环形图当前激活项目指示
 const activeCategory = ref({
-  name: "餐饮",
-  percent: "42%",
+  name: "暂无",
+  percent: "0%",
   tag: "最大",
 });
 
@@ -384,139 +397,46 @@ const budgetItems = [
   { name: "数码订阅", percent: 50, color: "#99462a", spent: "¥500" },
 ];
 
-const categoryList = [
-  { name: "餐饮美食", amount: "¥5,241", percent: "42%", color: "#99462a", value: 5241 },
-  { name: "居家生活", amount: "¥2,745", percent: "22%", color: "#d97757", value: 2745 },
-  { name: "孩子教育", amount: "¥2,246", percent: "18%", color: "#ffb59e", value: 2246 },
-  { name: "休闲出行", amount: "¥998", percent: "8%", color: "#41674c", value: 998 },
-  { name: "医疗健康", amount: "¥750", percent: "6%", color: "#a7d1b0", value: 750 },
-  { name: "订阅杂费", amount: "¥500", percent: "4%", color: "#88726c", value: 500 },
-];
-
-const recentTransactions = [
-  {
-    title: "山姆会员商店 · 周末大宗采购",
-    subtitle: "今日 11:20 · 林知栖",
-    amount: "- ¥ 638.40",
-    icon: "shopping_cart",
-    iconColor: "text-primary",
-  },
-  {
-    title: "星巴克甄选 · 咖啡轻食下午茶",
-    subtitle: "昨天 15:45 · 苏晓",
-    amount: "- ¥ 68.00",
-    icon: "local_cafe",
-    iconColor: "text-primary",
-  },
-  {
-    title: "国家电网与公用燃气费",
-    subtitle: "4月18日 · 公共自动代扣",
-    amount: "- ¥ 324.50",
-    icon: "bolt",
-    iconColor: "text-secondary",
-  },
-  {
-    title: "盒马鲜生 · 每日日日鲜与海鲜",
-    subtitle: "4月17日 18:30 · 林知栖",
-    amount: "- ¥ 186.20",
-    icon: "restaurant",
-    iconColor: "text-primary",
-  },
-  {
-    title: "滴滴出行 · 日常通勤接送",
-    subtitle: "4月16日 08:15 · 苏晓",
-    amount: "- ¥ 32.80",
-    icon: "directions_car",
-    iconColor: "text-outline",
-  },
-  {
-    title: "Apple 订阅 · iCloud+ 云存储",
-    subtitle: "4月15日 00:00 · 周期自动扣款",
-    amount: "- ¥ 68.00",
-    icon: "cloud",
-    iconColor: "text-secondary",
-  },
-];
-
-// 3 套丰富逼真的每日生活流水假数据
-const mockDatasets = {
-  "30d": {
-    dates: [
-      "04-01",
-      "04-02",
-      "04-03",
-      "04-04",
-      "04-05",
-      "04-06",
-      "04-07",
-      "04-08",
-      "04-09",
-      "04-10",
-      "04-11",
-      "04-12",
-      "04-13",
-      "04-14",
-      "04-15",
-      "04-16",
-      "04-17",
-      "04-18",
-      "04-19",
-      "04-20",
-      "04-21",
-      "04-22",
-      "04-23",
-      "04-24",
-      "04-25",
-      "04-26",
-      "04-27",
-      "04-28",
-      "04-29",
-      "04-30",
-    ],
-    expenses: [
-      220, 185, 310, 160, 780, 620, 190, 240, 175, 520, 360, 890, 420, 210, 1280, 180, 290, 324.5, 68, 890, 388.6, 260,
-      310, 450, 520, 740, 620, 310, 280, 410,
-    ],
-    incomes: [
-      950, 950, 950, 950, 950, 850, 850,
-      950, 950, 1100, 950, 950, 850, 850,
-      1200, 950, 950, 950, 950, 1050, 950,
-      850, 850, 950, 950, 950, 950, 1150, 850, 850,
-    ],
-  },
-  "14d": {
-    dates: [
-      "04-14",
-      "04-15",
-      "04-16",
-      "04-17",
-      "04-18",
-      "04-19",
-      "04-20",
-      "04-21",
-      "04-22",
-      "04-23",
-      "04-24",
-      "04-25",
-      "04-26",
-      "04-27",
-    ],
-    expenses: [210, 1280, 180, 290, 324.5, 68, 890, 388.6, 260, 310, 450, 520, 740, 620],
-    incomes: [950, 1200, 950, 950, 950, 950, 1050, 950, 850, 850, 950, 950, 950, 950],
-  },
-  "7d": {
-    dates: ["04-15", "04-16", "04-17", "04-18", "04-19", "04-20", "04-21"],
-    expenses: [1280, 180, 290, 324.5, 68, 890, 388.6],
-    incomes: [1200, 950, 950, 950, 950, 1050, 950],
-  },
-};
+const colors = ['#99462a', '#d97757', '#ffb59e', '#41674c', '#a7d1b0', '#88726c'];
+const categoryList = computed(() => (dashboard.value?.categories ?? []).map((c, i) => ({
+  ...c, color: colors[i % colors.length], amount: `¥${money(c.value)}`,
+  percent: `${summary.value.expense ? (c.value / summary.value.expense * 100).toFixed(1) : 0}%`
+})));
+const recentTransactions = computed(() => (dashboard.value?.recent ?? []).map(tx => ({
+  title: tx.merchant || tx.note || '收支记录',
+  subtitle: `${new Date(tx.occurred_at).toLocaleString('zh-CN')} · ${tx.creator?.name ?? '未知成员'}`,
+  amount: `${tx.type === 'income' ? '+' : '-'} ¥ ${money(Number(tx.amount))}`,
+  icon: tx.type === 'income' ? 'payments' : 'receipt_long', iconColor: tx.type === 'income' ? 'text-secondary' : 'text-primary'
+})));
+async function loadDashboard() {
+  const version = ++requestVersion;
+  const id = ledgerStore.currentLedgerId;
+  dashboard.value = null;
+  loadError.value = '';
+  updateTrendChart();
+  if (!id) { loading.value = false; await nextTick(); initCharts(); resetCategory(); return; }
+  loading.value = true;
+  try {
+    const result = await dashboardApi.get(id, parseInt(activeRange.value));
+    if (version !== requestVersion) return;
+    dashboard.value = result;
+  } catch (error) {
+    if (version !== requestVersion) return;
+    loadError.value = error instanceof Error ? error.message : '统计加载失败';
+  } finally {
+    if (version === requestVersion) {
+      loading.value = false;
+      await nextTick(); initCharts(); resetCategory();
+    }
+  }
+}
+watch([() => ledgerStore.currentLedgerId, activeRange], () => { void loadDashboard() });
 
 const switchRange = (range: "30d" | "14d" | "7d") => {
   activeRange.value = range;
-  updateTrendChart();
 };
 
-const focusCategory = (cat: (typeof categoryList)[0]) => {
+const focusCategory = (cat: (typeof categoryList.value)[0]) => {
   activeCategory.value = {
     name: cat.name.slice(0, 2),
     percent: cat.percent,
@@ -530,8 +450,8 @@ const focusCategory = (cat: (typeof categoryList)[0]) => {
 
 const resetCategory = () => {
   activeCategory.value = {
-    name: "餐饮",
-    percent: "42%",
+    name: categoryList.value[0]?.name.slice(0, 2) ?? "暂无",
+    percent: categoryList.value[0]?.percent ?? "0%",
     tag: "最大",
   };
   pieChart?.dispatchAction({
@@ -561,7 +481,8 @@ const toggleSeries = (name: "净收入" | "支出" | "收入") => {
 // 更新近30天/14天/7天走势图数据
 const updateTrendChart = () => {
   if (!trendChart) return;
-  const currentData = mockDatasets[activeRange.value];
+  const points = dashboard.value?.trend ?? [];
+  const currentData = { dates: points.map(p => p.date.slice(5)), incomes: points.map(p => p.income), expenses: points.map(p => p.expense) };
   const netIncomes = currentData.incomes.map((inc, i) => Math.round((inc - currentData.expenses[i]) * 10) / 10);
 
   trendChart.setOption(
@@ -601,7 +522,7 @@ const updateTrendChart = () => {
             let color = "#55433d";
             let prefix = "";
             if (item.seriesName === "净收入") {
-              color = item.value >= 0 ? "#2e6945" : "#ba1a1a";
+              color = "#2e6945";
               prefix = item.value >= 0 ? "+" : "";
             } else if (item.seriesName === "支出") {
               color = "#99462a";
@@ -627,8 +548,8 @@ const updateTrendChart = () => {
         axisLabel: {
           fontSize: 12,
           fontFamily: "'Manrope', sans-serif",
-          color: (val: string) => (val.includes("04-21") ? "#99462a" : "#88726c"),
-          fontWeight: (val: string) => (val.includes("04-21") ? "bold" : "normal"),
+          color: "#88726c",
+          fontWeight: "normal",
         },
       },
       yAxis: {
@@ -751,7 +672,7 @@ const initCharts = () => {
             scale: true,
             scaleSize: 4,
           },
-          data: categoryList.map((c) => ({
+          data: categoryList.value.map((c) => ({
             name: c.name,
             value: c.value,
             itemStyle: { color: c.color },
@@ -762,7 +683,7 @@ const initCharts = () => {
 
     // 鼠标悬停环形扇区时联动中心指示
     pieChart.on("mouseover", (params: any) => {
-      const match = categoryList.find((c) => c.name === params.name);
+      const match = categoryList.value.find((c) => c.name === params.name);
       if (match) {
         focusCategory(match);
       }
@@ -779,6 +700,7 @@ const handleResize = () => {
 };
 
 onMounted(() => {
+  void loadDashboard();
   nextTick(() => {
     initCharts();
     setTimeout(() => {
@@ -795,9 +717,14 @@ onMounted(() => {
     }
   });
   window.addEventListener("resize", handleResize);
+  window.addEventListener("focus", loadDashboard);
+  window.addEventListener("transactions-updated", loadDashboard);
 });
 
 onUnmounted(() => {
+  window.removeEventListener("focus", loadDashboard);
+  window.removeEventListener("transactions-updated", loadDashboard);
+  requestVersion++;
   window.removeEventListener("resize", handleResize);
   if (resizeObserver) {
     resizeObserver.disconnect();

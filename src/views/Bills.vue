@@ -1,6 +1,8 @@
 <template>
   <div class="flex flex-col w-full min-h-full" style="background-color: #fcf9f6">
     <div class="max-w-[88rem] mx-auto w-full px-4 py-3 flex flex-col gap-3">
+      <p v-if="loadingBills" class="text-sm">正在加载流水…</p>
+      <p v-if="listError" role="alert" class="text-red-600 text-sm">{{ listError }} <button @click="loadBills">重试</button></p>
       <!-- 1. Top Meta & Actions Combined Line -->
       <div class="flex items-center justify-between gap-3 pb-1 flex-wrap">
         <div class="flex items-center gap-3">
@@ -146,12 +148,9 @@
                 class="h-8 bg-surface-container-low text-on-surface rounded-xl pl-2.5 pr-7 appearance-none font-label-sm text-label-sm focus:outline-none cursor-pointer border border-surface-container hover:border-surface-container-high transition-colors"
               >
                 <option value="全部分类">全食品类与收支</option>
-                <option value="生鲜食品">餐饮美食 (餐食/生鲜)</option>
-                <option value="居家日常">居家生活 (物业/日用)</option>
-                <option value="交通出行">交通出行 (油耗/通行)</option>
-                <option value="医疗健康">医疗健康 (日常/药品)</option>
-                <option value="休闲娱乐">休闲娱乐 (文教/亲子)</option>
-                <option value="职业薪酬">职业薪酬 (工资发放)</option>
+                <optgroup v-for="group in groups" :key="group.id" :label="group.name">
+                  <option v-for="cat in group.children" :key="cat.id" :value="cat.name">{{ cat.name }}</option>
+                </optgroup>
               </select>
               <span class="material-symbols-outlined absolute right-2 pointer-events-none text-on-surface-variant text-sm">expand_more</span>
             </div>
@@ -163,9 +162,7 @@
                 class="h-8 bg-surface-container-low text-on-surface rounded-xl pl-2.5 pr-7 appearance-none font-label-sm text-label-sm focus:outline-none cursor-pointer border border-surface-container hover:border-surface-container-high transition-colors"
               >
                 <option value="全部">全家所有成员</option>
-                <option value="林知栖">林知栖 (户主)</option>
-                <option value="陈先生">陈先生 (配偶)</option>
-                <option value="姥姥">姥姥 (长辈)</option>
+                <option v-for="member in ledgerStore.currentMembers" :key="member.id" :value="member.name">{{ member.name }}</option>
               </select>
               <span class="material-symbols-outlined absolute right-2 pointer-events-none text-on-surface-variant text-sm">expand_more</span>
             </div>
@@ -474,6 +471,7 @@
         </div>
       </div>
 
+      <p class="text-xs text-on-surface-variant">以下智能洞察卡片为演示内容。</p>
       <!-- 5. Smart Insight 3-Card Deck -->
       <div class="grid grid-cols-1 lg:grid-cols-3 gap-3">
         <!-- Card 1: 类目支出比重 -->
@@ -646,7 +644,7 @@
 
         <div class="p-5 flex flex-col gap-3.5">
           <!-- 支出 / 收入 / 转账 分段切换 -->
-          <div class="grid grid-cols-3 bg-surface-container-low p-1 rounded-xl">
+          <div class="grid grid-cols-2 bg-surface-container-low p-1 rounded-xl">
             <button
               type="button"
               class="py-1.5 rounded-lg font-label-md text-label-md font-semibold transition-all text-center cursor-pointer"
@@ -667,16 +665,7 @@
             >
               收入
             </button>
-            <button
-              type="button"
-              class="py-1.5 rounded-lg font-label-md text-label-md font-semibold transition-all text-center cursor-pointer"
-              :class="newForm.type === '转账'
-                ? 'bg-surface-container-lowest text-on-surface shadow-sm'
-                : 'text-on-surface-variant hover:text-on-surface'"
-              @click="newForm.type = '转账'"
-            >
-              转账
-            </button>
+
           </div>
 
           <!-- 记账金额 -->
@@ -702,28 +691,15 @@
                 v-model="newForm.category"
                 class="w-full h-10 bg-surface-container-low text-on-surface rounded-xl px-3 font-body-sm text-body-sm focus:outline-none cursor-pointer border border-surface-container"
               >
-                <option value="生鲜食品">生鲜食品</option>
-                <option value="商务午餐">商务午餐 / 餐饮</option>
-                <option value="居家日常">居家日常</option>
-                <option value="交通出行">交通出行</option>
-                <option value="休闲娱乐">休闲娱乐</option>
-                <option value="医疗健康">医疗健康</option>
-                <option value="职业薪酬">职业薪酬</option>
-                <option value="数码电器">数码电器</option>
+                <option value="" disabled>请选择分类</option>
+                <option v-for="cat in leaves" :key="cat.id" :value="String(cat.id)">{{ cat.parentName }} · {{ cat.name }}</option>
               </select>
             </div>
             <div class="flex flex-col gap-1">
               <label class="font-label-sm text-label-sm text-on-surface-variant">
                 {{ ledgerStore.hasMultipleMembers ? '家庭成员' : '记账人' }}
               </label>
-              <select
-                v-model="newForm.member"
-                class="w-full h-10 bg-surface-container-low text-on-surface rounded-xl px-3 font-body-sm text-body-sm focus:outline-none cursor-pointer border border-surface-container"
-              >
-                <option value="林知栖">林知栖 (主理人)</option>
-                <option value="陈先生">陈先生 (协同人)</option>
-                <option value="姥姥">姥姥 (长辈)</option>
-              </select>
+              <div class="py-2 text-sm">{{ auth.displayName }}（当前用户）</div>
             </div>
           </div>
 
@@ -749,24 +725,26 @@
             />
           </div>
 
+          <p v-if="formError" role="alert" class="text-red-600 text-sm">{{ formError }}</p>
+          <router-link v-if="!accounts.length" to="/settings" class="text-primary text-sm">暂无支付方式，前往设置添加</router-link>
           <!-- 支付账户 -->
           <div class="flex flex-col gap-1">
             <label class="font-label-sm text-label-sm text-on-surface-variant">支付账户</label>
             <div class="grid grid-cols-3 gap-2">
               <label
-                v-for="chan in ['微信支付', '支付宝', '招商银行']"
-                :key="chan"
+                v-for="chan in accounts"
+                :key="chan.id"
                 class="flex items-center gap-2 p-2 bg-surface-container-low rounded-xl cursor-pointer hover:bg-surface-container-high transition-colors"
-                :class="newForm.account.includes(chan) ? 'ring-1 ring-primary bg-primary-fixed/20' : ''"
+                :class="newForm.account === String(chan.id) ? 'ring-1 ring-primary bg-primary-fixed/20' : ''"
               >
                 <input
                   v-model="newForm.account"
-                  :value="chan"
+                  :value="String(chan.id)"
                   class="accent-primary"
                   name="pay-chan"
                   type="radio"
                 />
-                <span class="font-label-sm text-label-sm">{{ chan }}</span>
+                <span class="font-label-sm text-label-sm">{{ chan.name }}</span>
               </label>
             </div>
           </div>
@@ -783,9 +761,10 @@
           <button
             class="px-5 py-1.5 rounded-xl bg-primary text-on-primary font-label-md text-label-md font-semibold hover:bg-surface-tint transition-colors shadow-sm cursor-pointer"
             type="button"
+            :disabled="savingBill"
             @click="submitNewBill"
           >
-            确认记入账本
+            {{ savingBill ? '保存中…' : '确认记入账本' }}
           </button>
         </div>
       </div>
@@ -933,10 +912,19 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, reactive } from 'vue'
+import { ref, computed, reactive, watch, onMounted, onUnmounted } from 'vue'
+import { transactionApi, localDateTime, type TransactionRecord } from '../api/transaction'
+import { categoryApi, flattenLeaves } from '../api/category'
+import { accountApi } from '../api/account'
+import { useAuthStore } from '../stores/auth'
+import type { CategoryGroup, Account } from '../interfaces'
 import { useLedgerStore } from '../stores/ledger'
 
 const ledgerStore = useLedgerStore()
+const auth = useAuthStore()
+const groups = ref<CategoryGroup[]>([]), accounts = ref<Account[]>([])
+const loadingBills = ref(false), listError = ref(''), formError = ref(''), savingBill = ref(false)
+const leaves = computed(() => flattenLeaves(groups.value.filter(g => g.type === (newForm.type === '收入' ? 'income' : 'expense'))))
 
 interface SubItem {
   name: string
@@ -994,9 +982,9 @@ const newForm = reactive({
   type: '支出' as '支出' | '收入' | '转账',
   amount: '',
   title: '',
-  category: '生鲜食品',
+  category: '',
   member: '林知栖',
-  account: '微信支付',
+  account: '',
   remark: ''
 })
 
@@ -1015,210 +1003,55 @@ const showToast = (msg: string) => {
 }
 
 // 完整真实流水数据 (与 Stitch UI 账目明细原型完全对齐)
-const billsData = ref<BillDetailItem[]>([
-  {
-    id: 'b-1',
-    title: '盒马鲜生 (万象天地店)',
-    category: '生鲜食品',
-    subCategory: '居家日用',
-    date: '2024-10-28',
-    time: '18:42',
-    member: '林知栖',
-    amount: 328.60,
-    type: '支出',
-    account: '微信支付',
-    voucher: '发票 x1',
-    icon: 'local_grocery_store',
-    remark: '进口大西洋鲑鱼排、日日鲜水培生菜、安佳鲜牛奶',
-    subItems: [
-      { name: '进口大西洋鲑鱼排 300g', count: 1, price: 128.00 },
-      { name: '日日鲜水培生菜 250g', count: 2, price: 9.90 },
-      { name: '安佳全脂纯牛奶 1L*2', count: 1, price: 38.80 },
-      { name: '澳洲安格斯牛肉饼', count: 1, price: 68.00 }
-    ]
-  },
-  {
-    id: 'b-2',
-    title: '沃歌斯 Wagas (高新科技园)',
-    category: '商务午餐',
-    subCategory: '餐饮美食',
-    date: '2024-10-28',
-    time: '12:30',
-    member: '林知栖',
-    amount: 68.00,
-    type: '支出',
-    account: '支付宝',
-    icon: 'restaurant',
-    remark: '能量色拉配鲜榨果汁 · 团队外出会谈'
-  },
-  {
-    id: 'b-3',
-    title: '某人工智能科技公司 · 10月薪资发放',
-    category: '月度薪资',
-    subCategory: '职业薪酬',
-    date: '2024-10-27',
-    time: '10:15',
-    member: '陈先生',
-    amount: 18500.00,
-    type: '收入',
-    account: '招行一卡通',
-    voucher: '回单',
-    icon: 'payments',
-    remark: '陈先生主账户统筹入账 (基本薪酬+绩效奖金)'
-  },
-  {
-    id: 'b-4',
-    title: '奈尔宝儿童乐园 (周末亲子活动票)',
-    category: '亲子乐园',
-    subCategory: '休闲娱乐',
-    date: '2024-10-26',
-    time: '19:30',
-    member: '陈先生',
-    amount: 398.00,
-    type: '支出',
-    account: '微信支付',
-    voucher: '门票',
-    icon: 'attractions',
-    remark: '陪伴孩子周末拓展活动'
-  },
-  {
-    id: 'b-5',
-    title: '中国石化 (深南大道加油站)',
-    category: '车辆加油',
-    subCategory: '交通出行',
-    date: '2024-10-25',
-    time: '15:20',
-    member: '陈先生',
-    amount: 420.00,
-    type: '支出',
-    account: '建行信用卡',
-    voucher: '发票 x1',
-    icon: 'local_gas_station',
-    remark: '95号汽油加满 49.5升'
-  },
-  {
-    id: 'b-6',
-    title: '叮当快药 (益生菌与维他命咀嚼片)',
-    category: '健康保障',
-    subCategory: '医疗健康',
-    date: '2024-10-24',
-    time: '20:10',
-    member: '林知栖',
-    amount: 156.40,
-    type: '支出',
-    account: '医保账户',
-    voucher: '电子票',
-    icon: 'medical_services',
-    remark: '换季居家常备医药箱补充'
-  },
-  {
-    id: 'b-7',
-    title: '南方电网 · 10月份生活用电扣缴',
-    category: '水电物业',
-    subCategory: '居家生活',
-    date: '2024-10-22',
-    time: '09:40',
-    member: '陈先生',
-    amount: 245.80,
-    type: '支出',
-    account: '招行扣款',
-    voucher: '月账单',
-    icon: 'bolt',
-    remark: '南山区金地花园自动代扣'
-  },
-  {
-    id: 'b-8',
-    title: '山姆会员商店 (前海旗舰店)',
-    category: '生鲜食品',
-    subCategory: '居家日用',
-    date: '2024-10-20',
-    time: '16:10',
-    member: '林知栖',
-    amount: 896.00,
-    type: '支出',
-    account: '招行信用卡',
-    voucher: '发票 x1',
-    icon: 'local_grocery_store',
-    remark: '半个月生活大包装物资补齐',
-    subItems: [
-      { name: '澳洲进口谷饲牛小排 1kg', count: 1, price: 178.00 },
-      { name: 'Member\'s Mark 鲜牛奶 2L*2', count: 1, price: 42.90 },
-      { name: '瑞士卷 16片装', count: 1, price: 68.00 },
-      { name: '三文鱼刺身拼盘 400g', count: 1, price: 139.60 }
-    ]
-  },
-  {
-    id: 'b-9',
-    title: '林知栖 10月份薪资入账',
-    category: '月度薪资',
-    subCategory: '职业薪酬',
-    date: '2024-10-15',
-    time: '10:00',
-    member: '林知栖',
-    amount: 16500.00,
-    type: '收入',
-    account: '招行一卡通',
-    voucher: '回单',
-    icon: 'payments',
-    remark: '设计总监月度薪资与季度奖金发放'
-  },
-  {
-    id: 'b-10',
-    title: '太二酸菜鱼聚餐',
-    category: '商务午餐',
-    subCategory: '餐饮美食',
-    date: '2024-10-12',
-    time: '19:15',
-    member: '陈先生',
-    amount: 188.00,
-    type: '支出',
-    account: '支付宝',
-    voucher: '发票 x1',
-    icon: 'restaurant',
-    remark: '周末亲友聚餐'
-  },
-  {
-    id: 'b-11',
-    title: '滴滴特惠快车出行接送',
-    category: '车辆加油',
-    subCategory: '交通出行',
-    date: '2024-10-11',
-    time: '18:10',
-    member: '林知栖',
-    amount: 28.60,
-    type: '支出',
-    account: '支付宝',
-    icon: 'directions_car',
-    remark: '晚高峰暴雨接送回家'
-  },
-  {
-    id: 'b-12',
-    title: '中国银行货币基金分红入账',
-    category: '月度薪资',
-    subCategory: '理财收益',
-    date: '2024-10-08',
-    time: '08:30',
-    member: '陈先生',
-    amount: 320.50,
-    type: '收入',
-    account: '中国银行',
-    voucher: '回单',
-    icon: 'account_balance',
-    remark: '稳健型应急储备金投资分红结息'
-  }
-])
-
+const billsData = ref<BillDetailItem[]>([])
+let loadVersion = 0
+function mapBill(t: TransactionRecord): BillDetailItem {
+  const date = t.occurred_at.replace('T', ' ')
+  return { id: String(t.id), title: t.merchant || t.note || t.category?.name || '收支记录',
+    category: groups.value.find(g => g.id === t.category?.parent_id)?.name || t.category?.name || '未分类',
+    subCategory: t.category?.name, date: date.slice(0, 10), time: date.slice(11, 16),
+    member: t.creator?.name || '未知用户', amount: Number(t.amount), type: t.type === 'income' ? '收入' : '支出',
+    account: t.account?.name || '已删除', remark: t.note || '', voucher: '无附件' }
+}
+async function loadBills() {
+  const version = ++loadVersion, ledgerId = ledgerStore.currentLedgerId
+  billsData.value = []; selectedRowIds.value = []; detailDialog.value = false; currentPage.value = 1
+  if (!ledgerId) { loadingBills.value = false; return }
+  loadingBills.value = true; listError.value = ''
+  try {
+    const records: TransactionRecord[] = []
+    let page = 1, lastPage = 1
+    do {
+      const response = await transactionApi.list(ledgerId, page)
+      if (version !== loadVersion) return
+      records.push(...response.data); lastPage = response.last_page; page++
+    } while (page <= lastPage)
+    billsData.value = records.map(mapBill)
+  } catch(e) { if (version === loadVersion) listError.value = e instanceof Error ? e.message : '加载失败' }
+  finally { if (version === loadVersion) loadingBills.value = false }
+}
+async function initialize() {
+  try { groups.value = await categoryApi.tree() } catch(e) { listError.value = e instanceof Error ? e.message : '分类加载失败' }
+  await loadBills()
+}
+onMounted(() => { void initialize(); window.addEventListener('transactions-updated', loadBills) })
+onUnmounted(() => { loadVersion++; window.removeEventListener('transactions-updated', loadBills) })
+watch(() => ledgerStore.currentLedgerId, () => { addDialog.value = false; void loadBills() })
+watch(() => newForm.type, () => { newForm.category = '' })
+watch([selectedPeriod, filterType, selectedCategory, selectedMember, searchQuery], () => { currentPage.value = 1 })
 // 动态日期显示
-const displayDateRange = computed(() => {
-  if (selectedPeriod.value === '本月') return '2024-10-01 ~ 2024-10-31'
-  if (selectedPeriod.value === '上月') return '2024-09-01 ~ 2024-09-30'
-  if (selectedPeriod.value === '近7天') return '2024-10-22 ~ 2024-10-28'
-  return '2024-01-01 ~ 2024-10-31'
+const dateRange = computed(() => {
+  const now = new Date(), from = new Date(now.getFullYear(), now.getMonth(), 1), to = new Date(now.getFullYear(), now.getMonth() + 1, 0)
+  if (selectedPeriod.value === '上月') { from.setMonth(from.getMonth() - 1); to.setDate(0) }
+  if (selectedPeriod.value === '近7天') { from.setTime(now.getTime()); from.setDate(from.getDate() - 6); to.setTime(now.getTime()) }
+  if (selectedPeriod.value === '今年') { from.setMonth(0); to.setTime(now.getTime()) }
+  return [localDateTime(from).slice(0, 10), localDateTime(to).slice(0, 10)]
 })
-
+const displayDateRange = computed(() => dateRange.value.join(' ~ '))
 // 多维检索过滤
 const filteredBills = computed(() => {
   return billsData.value.filter(b => {
+    if (b.date < dateRange.value[0] || b.date > dateRange.value[1]) return false
     // 搜索词过滤
     if (searchQuery.value) {
       const q = searchQuery.value.trim().toLowerCase()
@@ -1305,21 +1138,22 @@ const toggleSelectRow = (id: string) => {
   }
 }
 
-const batchDelete = () => {
-  if (confirm(`确定要删除选中的 ${selectedRowIds.value.length} 笔账目流水吗？`)) {
-    billsData.value = billsData.value.filter(b => !selectedRowIds.value.includes(b.id))
-    showToast(`成功批量删除 ${selectedRowIds.value.length} 笔流水记录`)
-    selectedRowIds.value = []
-  }
+const batchDelete = async () => {
+  const id = ledgerStore.currentLedgerId
+  if (!id || !confirm(`确定删除选中的 ${selectedRowIds.value.length} 笔流水吗？`)) return
+  try { await transactionApi.batchRemove(id, selectedRowIds.value.map(Number)); window.dispatchEvent(new Event('transactions-updated')); showToast('已删除选中流水') }
+  catch(e) { showToast(e instanceof Error ? e.message : '删除失败') }
 }
 
 const batchCategorize = () => {
   showToast('已启动批量智能分类助手')
 }
 
-const deleteBill = (id: string) => {
-  billsData.value = billsData.value.filter(b => b.id !== id)
-  showToast('账目流水已移出账本')
+const deleteBill = async (id: string) => {
+  const ledgerId = ledgerStore.currentLedgerId
+  if (!ledgerId || !confirm('确定删除这笔流水吗？')) return
+  try { await transactionApi.remove(ledgerId, Number(id)); window.dispatchEvent(new Event('transactions-updated')); showToast('流水已删除') }
+  catch(e) { showToast(e instanceof Error ? e.message : '删除失败') }
 }
 
 const resetFilters = () => {
@@ -1345,7 +1179,7 @@ const openRecurringModal = () => {
 }
 
 const toggleDateFilter = () => {
-  showToast('已定位至 2024年10月度核算区间')
+  showToast(displayDateRange.value)
 }
 
 // 辅助展示
@@ -1400,40 +1234,32 @@ const openDetail = (item: BillDetailItem) => {
   detailDialog.value = true
 }
 
-const openAddDialog = () => {
-  newForm.amount = ''
-  newForm.title = ''
-  newForm.remark = ''
-  newForm.type = '支出'
-  addDialog.value = true
+const openAddDialog = async () => {
+  newForm.amount = ''; newForm.title = ''; newForm.remark = ''; newForm.type = '支出'; newForm.category = ''; newForm.account = ''
+  formError.value = ''; addDialog.value = true
+  try {
+    const [tree, list] = await Promise.all([categoryApi.tree(), accountApi.list()])
+    groups.value = tree; accounts.value = list; newForm.account = String(list[0]?.id ?? '')
+  } catch(e) { formError.value = e instanceof Error ? e.message : '加载失败' }
+}
+const submitNewBill = async () => {
+  if (savingBill.value) return
+  const ledgerId = ledgerStore.currentLedgerId
+  formError.value = ''
+  if (!ledgerId) { formError.value = '请先选择账本'; return }
+  if (!Number.isFinite(Number(newForm.amount)) || Number(newForm.amount) < 0.01) { formError.value = '请输入有效金额（至少 0.01）'; return }
+  if (!leaves.value.some(cat => cat.id === Number(newForm.category))) { formError.value = '请选择归属品类'; return }
+  if (!accounts.value.some(account => account.id === Number(newForm.account))) { formError.value = '请选择支付账户'; return }
+  savingBill.value = true
+  try {
+    await transactionApi.create(ledgerId, { type: newForm.type === '收入' ? 'income' : 'expense', amount: newForm.amount,
+      category_id: Number(newForm.category), account_id: Number(newForm.account), merchant: newForm.title,
+      note: newForm.remark, occurred_at: localDateTime(), source: 'manual' })
+    addDialog.value = false; window.dispatchEvent(new Event('transactions-updated')); showToast('记账成功，已保存到账本')
+  } catch(e) { formError.value = e instanceof Error ? e.message : '记账失败，请重试' }
+  finally { savingBill.value = false }
 }
 
-const submitNewBill = () => {
-  const amt = parseFloat(newForm.amount)
-  if (!amt || !newForm.title) {
-    alert('请填写完整记账金额与商户说明')
-    return
-  }
-
-  billsData.value.unshift({
-    id: `b-${Date.now()}`,
-    title: newForm.title,
-    category: newForm.category,
-    subCategory: '新增记账',
-    date: new Date().toISOString().slice(0, 10),
-    time: new Date().toTimeString().slice(0, 5),
-    member: newForm.member,
-    amount: amt,
-    type: newForm.type,
-    account: newForm.account,
-    voucher: '电子票',
-    icon: getCategoryIcon(newForm.category),
-    remark: newForm.remark || '手动录入开支'
-  })
-
-  addDialog.value = false
-  showToast(`已成功录入「${newForm.title}」¥${amt.toFixed(2)}`)
-}
 </script>
 
 <style scoped>

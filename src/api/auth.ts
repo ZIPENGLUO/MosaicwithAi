@@ -35,6 +35,12 @@ export async function me(): Promise<User> {
   return api.get<User>('/auth/me')
 }
 
+export async function updateProfile(payload: { name: string; email: string; current_password?: string; avatar?: string | null }): Promise<User> {
+  const user = await api.put<User>('/auth/me', payload)
+  setStoredUser(user)
+  return user
+}
+
 /** 退出登录：即使后端失败也要清本地登录态，否则用户会卡住 */
 export async function logout(): Promise<void> {
   try {

@@ -196,7 +196,6 @@ async function handleSubmit() {
       password: form.password,
       password_confirmation: form.passwordConfirmation
     })
-    // 后端注册成功即发 token（等于已登录）→ 直接进首页
     router.replace('/home')
   } catch (e: any) {
     // 422 的字段错误（如邮箱已存在）在 client.ts 里已提取成可读文案

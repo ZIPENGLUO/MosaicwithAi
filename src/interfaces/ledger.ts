@@ -46,6 +46,7 @@ export interface LedgerMember {
   user?: {
     id: number
     name: string
+    avatar?: string | null
   }
   created_at?: string
   updated_at?: string

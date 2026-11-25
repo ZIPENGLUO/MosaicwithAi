@@ -15,7 +15,7 @@ const AVATARS: Record<number, string> = {
   1: '/avatars/user-lin.png',
   2: '/avatars/member-chen.png'
 }
-const DEFAULT_AVATAR = '/avatars/默认头像.png'
+const DEFAULT_AVATAR = '/avatars/user-lin.png'
 
 /** 把后端成员结构映射成页面用的展示结构 */
 function toMemberView(m: LedgerMember): LedgerMemberView {
@@ -25,7 +25,7 @@ function toMemberView(m: LedgerMember): LedgerMemberView {
     name: m.user?.name ?? `用户${userId}`,
     role: m.role,
     roleLabel: ROLE_LABELS[m.role] ?? m.role,
-    avatar: AVATARS[userId] ?? DEFAULT_AVATAR
+    avatar: m.user?.avatar || AVATARS[userId] || DEFAULT_AVATAR
   }
 }
 
@@ -125,6 +125,13 @@ export const useLedgerStore = defineStore('ledger', () => {
   }
 
   /** 切换账本：按名字找到对应 id，并重新拉成员 */
+  async function createLedger(name: string) {
+    const created = await ledgerApi.create({ name, currency: 'CNY' })
+    // 创建后仅更新列表，保留用户当前选择。
+    const list = await ledgerApi.list().catch(() => null)
+    ledgers.value = list ? list.map(toConfig) : [...ledgers.value, toConfig(created)]
+  }
+
   async function setLedger(name: string) {
     const found = ledgers.value.find(l => l.name === name)
     if (! found) return
@@ -146,6 +153,7 @@ export const useLedgerStore = defineStore('ledger', () => {
     loading,
     loadLedgers,
     loadMembers,
-    setLedger
+    setLedger,
+    createLedger
   }
 })

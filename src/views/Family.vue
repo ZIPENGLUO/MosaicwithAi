@@ -180,6 +180,7 @@
                       >
                         {{ member.role }}
                       </span>
+                      <button v-if="isOwner && Number(member.id) !== authStore.user?.id" type="button" :disabled="changingRole" class="text-xs text-primary" @click="changeRole(member.id, member.role)">{{ member.role === '管理员' ? '取消管理员' : '设为管理员' }}</button>
                       <span v-if="member.isCurrentUser" class="text-[10px] text-primary font-semibold">
                         (当前账号)
                       </span>
@@ -383,43 +384,10 @@
 
         <div class="flex flex-col gap-3 text-xs">
           <div class="flex flex-col gap-1">
-            <label class="font-semibold text-on-surface">成员姓名 / 称谓</label>
-            <input
-              v-model="newMemberForm.name"
-              type="text"
-              placeholder="例如：奶奶、弟弟、保洁阿姨"
-              class="w-full h-10 px-3 rounded-lg border border-outline-variant/40 bg-surface-container-low text-on-surface focus:outline-none focus:border-primary"
-            />
-          </div>
-
-          <div class="flex flex-col gap-1">
-            <label class="font-semibold text-on-surface">家庭协同角色</label>
-            <select
-              v-model="newMemberForm.role"
-              class="w-full h-10 px-3 rounded-lg border border-outline-variant/40 bg-surface-container-low text-on-surface focus:outline-none focus:border-primary cursor-pointer"
-            >
-              <option value="家庭管理员">家庭管理员 (拥有完整记账与预算权限)</option>
-              <option value="协同出资人">协同出资人 (参与公用账本记账与分摊)</option>
-              <option value="长辈备用金账户">长辈备用金账户 (专属额度与便民代扣)</option>
-              <option value="儿童成长账户">儿童成长账户 (限额零花与成长储蓄)</option>
-            </select>
-          </div>
-
-          <div class="flex flex-col gap-1">
-            <label class="font-semibold text-on-surface">月度预算配额 (元)</label>
-            <input
-              v-model="newMemberForm.quota"
-              type="number"
-              placeholder="2000"
-              class="w-full h-10 px-3 rounded-lg border border-outline-variant/40 bg-surface-container-low text-on-surface focus:outline-none focus:border-primary font-amount-table"
-            />
-          </div>
-
-          <!-- 生成的邀请码与二维码预览 -->
-          <div class="p-3 rounded-xl bg-surface-container-low flex flex-col items-center justify-center gap-1.5 border border-outline-variant/20 mt-1">
-            <span class="text-[11px] text-on-surface-variant">家庭专属邀请码 (7天有效)</span>
-            <span class="font-mono text-base font-bold text-primary tracking-widest">MOSAIC-8892-HOME</span>
-            <span class="text-[10px] text-on-surface-variant">让对方扫描二维码或在加入账本时输入此码即可入组</span>
+            <label class="font-semibold">对方的注册邮箱</label>
+            <input v-model="newMemberForm.email" type="email" placeholder="请输入已注册的邮箱" class="w-full h-10 px-3 rounded-lg border border-outline-variant/40" :disabled="inviting" />
+            <p class="text-on-surface-variant">对方将在顶部通知中收到邀请，接受后以成员身份加入。邀请 7 天有效。</p>
+            <p v-if="!isOwner" class="text-red-600">只有账本所有者可以发送邀请。</p>
           </div>
         </div>
 
@@ -434,6 +402,7 @@
           <button
             type="button"
             class="px-4 py-2 rounded-lg text-xs font-semibold bg-primary-container text-on-primary hover:bg-primary shadow-xs"
+            :disabled="inviting || !isOwner"
             @click="submitInviteMember"
           >
             确认发送邀请
@@ -505,8 +474,29 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue'
 import { useLedgerStore } from '../stores/ledger'
+import { useAuthStore } from '../stores/auth'
+import { notificationApi } from '../api/notification'
+import { ledgerApi } from '../api/ledger'
 
 const ledgerStore = useLedgerStore()
+const authStore = useAuthStore()
+const isOwner = computed(() => ledgerStore.currentLedgerConfig?.owner_id === authStore.user?.id)
+const inviting = ref(false)
+const changingRole = ref(false)
+async function changeRole(userId: string, role: string) {
+  const id = ledgerStore.currentLedgerId
+  if (!id || !isOwner.value || changingRole.value) return
+  changingRole.value = true
+  try {
+    const members = await ledgerApi.members(id)
+    const member = members.find(m => m.user_id === Number(userId))
+    if (!member) throw new Error('成员不存在')
+    await notificationApi.role(id, member.id, role === '管理员' ? 'member' : 'admin')
+    await ledgerStore.loadMembers()
+    showToast('角色已更新')
+  } catch (e) { showToast(e instanceof Error ? e.message : '角色更新失败') }
+  finally { changingRole.value = false }
+}
 
 interface MemberItem {
   id: string
@@ -610,7 +600,12 @@ const personalMember = ref<MemberItem[]>([
 ])
 
 const memberList = computed(() => {
-  return ledgerStore.hasMultipleMembers ? familyMembers.value : personalMember.value
+  return ledgerStore.currentMembers.map(m => ({
+    ...personalMember.value[0]!, id: String(m.id), name: m.name, avatar: m.avatar,
+    role: m.roleLabel, isCurrentUser: m.id === authStore.user?.id,
+    dutyDesc: '账本成员', permissionLevel: m.role === 'member' ? '可管理自己的流水' : '可管理账本内流水',
+    spentAmount: 0, budgetQuota: 0, percentUsed: 0, categories: []
+  }))
 })
 
 // 待清算分摊金额
@@ -660,11 +655,7 @@ const editQuotaValue = ref(0)
 const toastVisible = ref(false)
 const toastMsg = ref('')
 
-const newMemberForm = ref({
-  name: '',
-  role: '协同出资人',
-  quota: 2000
-})
+const newMemberForm = ref({ email: '' })
 
 const showToast = (msg: string) => {
   toastMsg.value = msg
@@ -675,21 +666,22 @@ const showToast = (msg: string) => {
 }
 
 const openInviteDialog = () => {
-  newMemberForm.value = {
-    name: '',
-    role: '协同出资人',
-    quota: 2000
-  }
+  newMemberForm.value = { email: '' }
   showInviteModal.value = true
 }
 
-const submitInviteMember = () => {
-  if (!newMemberForm.value.name) {
-    showToast('请输入成员姓名或称谓')
-    return
-  }
-  showInviteModal.value = false
-  showToast(`已生成「${newMemberForm.value.name}」的家庭邀请函与专属二维码！`)
+const submitInviteMember = async () => {
+  const id = ledgerStore.currentLedgerId
+  if (!id || !isOwner.value || inviting.value) return
+  const email = newMemberForm.value.email.trim()
+  if (!email) { showToast('请输入对方的注册邮箱'); return }
+  inviting.value = true
+  try {
+    await notificationApi.invite(id, email)
+    showInviteModal.value = false
+    showToast('邀请已发送，请对方查看顶部通知')
+  } catch (e) { showToast(e instanceof Error ? e.message : '邀请失败') }
+  finally { inviting.value = false }
 }
 
 const openEditQuotaDialog = (member: MemberItem) => {
